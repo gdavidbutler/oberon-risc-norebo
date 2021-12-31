@@ -1,33 +1,52 @@
-# Project Norebo
+# Oberon RISC Norebo (Project Norebo)
 
-Norebo is a hack to run some _Project Oberon 2013_ software on the
-Unix command line. Programs that use the GUI obviously won't work, but
-e.g. the compiler runs.
+Norebo is a hack to run some _Project Oberon 2013_ software on a
+POSIX system command line. Programs that use the GUI obviously
+won't work, but e.g. the compiler runs.
 
-I probably won't be maintaining this project, so feel free to fork
-if you want to develop it further.
+## License
+
+This repository is licensed under GPL v3 (see LICENSE).
+
+The file `required-copyright-and-permission-notice.txt` is included, as required,
+but *only* applies to the initial fork of this repository and the first commit of
+original files in the `Sources` and `SourcesVerilog` directories from:
+
+* http://people.inf.ethz.ch/wirth/ProjectOberon/
+* http://www.projectoberon.com
+
+If you want to use the orginal license, use the original source.
 
 ## Contents
 
 * `Runtime/` RISC5 emulator and operating system interface.
-* `Oberon/` Unmodified source code from Project Oberon 2013.
-* `Norebo/` Norebo-specific and new modules.
-* `Bootstrap/` Pre-compiled modules to bootstrap Norebo.
-* `build.sh` Script to rebuild Norebo. See Norebo in action.
+* `Bootstrap/` pre-compiled modules to bootstrap Norebo.
+* `Norebo/` Norebo-specific, modified and new modules.
+* `Sources/` source code from Project Oberon 2013.
+* `SourcesVerilog/` source verilog code from Project Oberon 2013.
+* `Host/` Host-specific, modified and new modules.
+* `build.sh` Script to build Bootstrap.
+
+## End-of-line
+
+Oberon (the O/S not the language, e.g. Texts.Mod, Edit.Mod, etc.)
+uses ASCII CR (0D hex) for end-of-line.
+This is quite inconvenient for GIT and friends (diff, etc.).
+
+To leverage common cross developemnt tools, texts are stored
+in the repository using ASCII LF (0A hex) for end-of-line.
+
+The procedure VDiskUtil.InstallFiles converts LF to CR.
 
 ## PO2013 image build tools
 
-This repository also contains tools to build fresh PO2013 filesystem
-images.  Use it like so:
+This repository also contains tools to build PO2013 filesystem images.
+Use it like so:
 
-    ./fetch-sources.py upstream
-    ./build-image.py upstream
+    ./build-host.sh
 
-...where `upstream` is the name of the directory where the sources
-should live.  (Replace it with the name of your choice.) This will
-download the project sources, compile them, create runnable disk image
-`build/Oberon.dsk`.  The CSV build manifest controls which set of
-files should define the resulting system.  The disk image can be run
+This will compile Sources and create a runnable disk image
+`build/Oberon.dsk`. The disk image can be run
 on the [Project Oberon RISC emulator].
 
 Supporting Oberon modules are stored in `Norebo`: a virtual file

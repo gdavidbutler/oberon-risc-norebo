@@ -2,6 +2,10 @@ MODULE VDiskUtil;
   IMPORT Files, VDisk, VFileDir, VFiles, Texts, Oberon;
 
   VAR W: Texts.Writer;
+      S: ARRAY 3 OF RECORD
+           l: INTEGER;
+           s: ARRAY 6 OF CHAR;
+         END;
 
   PROCEDURE EndLine;
   BEGIN Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
@@ -24,14 +28,29 @@ MODULE VDiskUtil;
       Rf: Files.Rider;
       Rg: VFiles.Rider;
       b: BYTE;
+      l, s: INTEGER;
+      i, j: INTEGER;
   BEGIN
     Texts.WriteString(W, "  copying "); Texts.WriteString(W, srcname);
     Texts.WriteString(W, " => "); Texts.WriteString(W, dstname);
     Texts.Append(Oberon.Log, W.buf);
     f := Files.Old(srcname);
     IF f # NIL THEN g := VFiles.New(v, dstname);
+      l := 0; WHILE dstname[l] # 00X DO INC(l); END;
+      s := 0; WHILE s < LEN(S) DO
+        i := l; j := S[s].l;
+        WHILE (i > 0) & (j > 0) & (dstname[i - 1] = S[s].s[j - 1]) DO DEC(i); DEC(j); END;
+        IF j = 0 THEN s := LEN(S); ELSE INC(s); END
+      END;
       Files.Set(Rf, f, 0); VFiles.Set(Rg, g, 0); Files.ReadByte(Rf, b);
-      WHILE ~Rf.eof DO VFiles.WriteByte(Rg, b); Files.ReadByte(Rf, b) END;
+      IF j = 0 THEN
+        WHILE ~Rf.eof DO
+          IF b = 0AH THEN b := 0DH; END;
+          VFiles.WriteByte(Rg, b); Files.ReadByte(Rf, b);
+        END;
+      ELSE
+        WHILE ~Rf.eof DO VFiles.WriteByte(Rg, b); Files.ReadByte(Rf, b); END;
+      END;
       Files.Close(f); VFiles.Register(g); VFiles.Close(g)
     ELSE Texts.WriteString(W, " failed")
     END;
@@ -60,5 +79,9 @@ MODULE VDiskUtil;
     END
   END InstallFiles;
 
-BEGIN Texts.OpenWriter(W)
+BEGIN
+  Texts.OpenWriter(W);
+  S[0].s := ".Mod";  S[0].l := 4;
+  S[1].s := ".Text"; S[1].l := 5;
+  S[2].s := ".Tool"; S[2].l := 5;
 END VDiskUtil.
