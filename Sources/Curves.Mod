@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Curves;  (*NW 8.11.90 / 18.4.2013*)
   IMPORT Display, Files, Oberon, Graphics, GraphicFrames;
 
@@ -14,20 +49,20 @@ MODULE Curves;  (*NW 8.11.90 / 18.4.2013*)
 
   PROCEDURE Dot(f: GraphicFrames.Frame; col, x, y: INTEGER);
   BEGIN
-    IF (x >= f.X) & (x+7 < f.X1) & (y >= f.Y) & (x+7 < f.Y1) THEN Display.Dot(col, x, y, Display.replace) END
+    IF (x >= f.X) AND (x+7 < f.X1) AND (y >= f.Y) AND (x+7 < f.Y1) THEN Display.Dot(col, x, y, Display.replace) END
   END Dot;
 
   PROCEDURE mark(f: GraphicFrames.Frame; col, x, y: INTEGER);
   BEGIN DEC(x, 3); DEC(y, 3);
-    IF (x >= f.X) & (x+7 < f.X1) & (y >= f.Y) & (y+7 < f.Y1) THEN
+    IF (x >= f.X) AND (x+7 < f.X1) AND (y >= f.Y) AND (y+7 < f.Y1) THEN
       IF col = Display.black THEN Display.ReplConst(Display.black, x, y, 7, 7, Display.replace)
       ELSE Display.CopyPattern(col, GraphicFrames.tack, x, y, Display.replace)
       END
     END
   END mark;
 
-  PROCEDURE line(f: GraphicFrames.Frame; col: INTEGER; x, y, w, h, d: LONGINT);
-    VAR x1, y1, u: LONGINT;
+  PROCEDURE line(f: GraphicFrames.Frame; col: INTEGER; x, y, w, h, d: INTEGER);
+    VAR x1, y1, u: INTEGER;
   BEGIN
     IF h < w THEN
       x1 := x+w; u := (h-w) DIV 2;
@@ -45,8 +80,8 @@ MODULE Curves;  (*NW 8.11.90 / 18.4.2013*)
     END
   END line;
 
-  PROCEDURE circle(f: GraphicFrames.Frame; col: INTEGER; x0, y0, r: LONGINT);
-    VAR x, y, u: LONGINT;
+  PROCEDURE circle(f: GraphicFrames.Frame; col: INTEGER; x0, y0, r: INTEGER);
+    VAR x, y, u: INTEGER;
   BEGIN u := 1 - r; x := r; y := 0;
     WHILE y <= x DO
       Dot(f, col, x0+x, y0+y);
@@ -62,8 +97,8 @@ MODULE Curves;  (*NW 8.11.90 / 18.4.2013*)
     END
   END circle;
 
-  PROCEDURE ellipse(f: GraphicFrames.Frame; col: INTEGER; x0, y0, a, b: LONGINT);
-    VAR x, y, y1, aa, bb, d, g, h: LONGINT;
+  PROCEDURE ellipse(f: GraphicFrames.Frame; col: INTEGER; x0, y0, a, b: INTEGER);
+    VAR x, y, y1, aa, bb, d, g, h: INTEGER;
   BEGIN aa := a*a; bb := b*b;
     h := (aa DIV 4) - b*aa + bb; g := (9*aa DIV 4) - 3*b*aa + bb; x := 0; y := b;
     WHILE g < 0 DO
@@ -103,7 +138,7 @@ MODULE Curves;  (*NW 8.11.90 / 18.4.2013*)
     CASE M OF  GraphicFrames.DrawMsg:
       x := obj.x + M.x; y := obj.y + M.y; w := obj.w; h := obj.h; f := M.f;
       IF M.col = Display.black THEN col := obj.col ELSE col := M.col END ;
-      IF (x < f.X1) & (f.X <= x+w) & (y < f.Y1) & (f.Y <= y+h) THEN
+      IF (x < f.X1) AND (f.X <= x+w) AND (y < f.Y1) AND (f.Y <= y+h) THEN
         IF obj(Curve).kind = 0 THEN  (*up-line*)
           IF M.mode = 0 THEN
             IF obj.selected THEN mark(f, Display.white, x, y) END ;
@@ -149,10 +184,10 @@ MODULE Curves;  (*NW 8.11.90 / 18.4.2013*)
     IF obj(Curve).kind <= 1 THEN  (*line*)
       w := obj.w; h := obj.h;
       IF obj(Curve).kind = 1 THEN y0 := obj.y + h; h := -h ELSE y0 := obj.y END ;
-      res := (obj.x <= x) & (x < obj.x + w) & (ABS(y-y0)*w - (x-obj.x)*h < w*4)
+      res := (obj.x <= x) AND (x < obj.x + w) AND (ABS(y-y0)*w - (x-obj.x)*h < w*4)
     ELSE (*circle or ellipse*)
       xm := obj.w DIV 2 + obj.x;
-      res := (xm - 4 <= x) & (x <= xm + 4) & (obj.y - 4 <= y) & (y <= obj.y + 4)
+      res := (xm - 4 <= x) AND (x <= xm + 4) AND (obj.y - 4 <= y) AND (y <= obj.y + 4)
     END ;
     RETURN res
   END Selectable;
@@ -178,7 +213,7 @@ MODULE Curves;  (*NW 8.11.90 / 18.4.2013*)
       c: Curve;
       G: GraphicFrames.Frame;
   BEGIN G := GraphicFrames.Focus();
-    IF (G # NIL) & (G.mark.next # NIL) THEN
+    IF (G # NIL) AND (G.mark.next # NIL) THEN
       GraphicFrames.Deselect(G);
       x0 := G.mark.x; y0 := G.mark.y; x1 := G.mark.next.x; y1 := G.mark.next.y;
       NEW(c); c.col := Oberon.CurCol;
@@ -199,7 +234,7 @@ MODULE Curves;  (*NW 8.11.90 / 18.4.2013*)
       c: Curve;
       G: GraphicFrames.Frame;
   BEGIN G := GraphicFrames.Focus();
-    IF (G # NIL) & (G.mark.next # NIL) THEN
+    IF (G # NIL) AND (G.mark.next # NIL) THEN
       GraphicFrames.Deselect(G);
       x0 := G.mark.x; y0 := G.mark.y; r := ABS(G.mark.next.x-x0);
       IF r > 4 THEN
@@ -217,11 +252,11 @@ MODULE Curves;  (*NW 8.11.90 / 18.4.2013*)
       c: Curve;
       G: GraphicFrames.Frame;
   BEGIN G := GraphicFrames.Focus();
-    IF (G # NIL) & (G.mark.next # NIL) & (G.mark.next.next # NIL) THEN
+    IF (G # NIL) AND (G.mark.next # NIL) AND (G.mark.next.next # NIL) THEN
       GraphicFrames.Deselect(G);
       x0 := G.mark.x; y0 := G.mark.y;
       a := ABS(G.mark.next.x-x0); b := ABS(G.mark.next.next.y - y0);
-      IF (a > 4) & (b > 4) THEN
+      IF (a > 4) AND (b > 4) THEN
         NEW(c); c.x := x0 - a - G.x; c.y := y0 - b - G.y; c.w := 2*a+1; c.h := 2*b+1;
         c.kind := 3; c.col := Oberon.CurCol;
         c.lw := Graphics.width; c.do := method;

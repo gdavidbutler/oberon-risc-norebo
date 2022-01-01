@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE  ORC;  (*Connection to RISC; NW 11.11.2013*)
   IMPORT SYSTEM, Files, Texts, Oberon, V24;
   CONST portno = 1; (*RS-232*)
@@ -5,12 +40,12 @@ MODULE  ORC;  (*Connection to RISC; NW 11.11.2013*)
     REQ = 20X; REC = 21X; SND = 22X; CLS = 23X; ACK = 10X;
     Tout = 1000;
 
-  VAR res: LONGINT;
+  VAR res: INTEGER;
     W: Texts.Writer;
 
   PROCEDURE Flush*;
     VAR ch: CHAR;
-  BEGIN 
+  BEGIN
     WHILE V24.Available(portno) > 0 DO V24.Receive(portno, ch, res); Texts.Write(W, ch) END ;
     Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
   END Flush;
@@ -31,7 +66,7 @@ MODULE  ORC;  (*Connection to RISC; NW 11.11.2013*)
     Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
   END TestReq;
 
-  PROCEDURE SendInt(x: LONGINT);
+  PROCEDURE SendInt(x: INTEGER);
     VAR i: INTEGER;
   BEGIN i := 4;
     WHILE i > 0 DO
@@ -40,7 +75,7 @@ MODULE  ORC;  (*Connection to RISC; NW 11.11.2013*)
   END SendInt;
 
   PROCEDURE Load*;  (*linked boot file  F.bin*)
-    VAR i, m, n, w: LONGINT;
+    VAR i, m, n, w: INTEGER;
       F: Files.File; R: Files.Rider;
       S: Texts.Scanner;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
@@ -65,11 +100,11 @@ MODULE  ORC;  (*Connection to RISC; NW 11.11.2013*)
 (* ------------ send and receive files ------------ *)
 
   PROCEDURE Rec(VAR ch: CHAR);   (*receive with timeout*)
-    VAR time: LONGINT;
+    VAR time: INTEGER;
   BEGIN time := Oberon.Time() + 3000;
     LOOP
       IF V24.Available(pno) > 0 THEN V24.Receive(pno, ch, res); EXIT END ;
-      IF Oberon.Time() >= time THEN ch := 0X; EXIT END 
+      IF Oberon.Time() >= time THEN ch := 0X; EXIT END
     END
   END Rec;
 
@@ -82,7 +117,7 @@ MODULE  ORC;  (*Connection to RISC; NW 11.11.2013*)
 
   PROCEDURE Send*;
     VAR ch, code: CHAR;
-      n, n0, L: LONGINT;
+      n, n0, L: INTEGER;
       F: Files.File; R: Files.Rider;
       S: Texts.Scanner;
   BEGIN V24.Send(pno, REQ, res); Rec(code);
@@ -117,7 +152,7 @@ MODULE  ORC;  (*Connection to RISC; NW 11.11.2013*)
 
   PROCEDURE Receive*;
     VAR ch, code: CHAR;
-      n, L, LL: LONGINT;
+      n, L, LL: INTEGER;
       F: Files.File; R: Files.Rider;
       orgname: ARRAY 32 OF CHAR;
       S: Texts.Scanner;
@@ -143,23 +178,23 @@ MODULE  ORC;  (*Connection to RISC; NW 11.11.2013*)
       Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
     END
   END Receive;
-  
+
   PROCEDURE Close*;
   BEGIN V24.Send(pno, CLS, res);
     Texts.WriteString(W, "Server closed"); Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
   END Close;
-  
+
 (* ------------ Oberon-0 commands ------------ *)
 
   PROCEDURE RecByte(VAR ch: CHAR);
-    VAR T: LONGINT; ch0: CHAR;
+    VAR T: INTEGER; ch0: CHAR;
   BEGIN T := Oberon.Time() + Tout;
     REPEAT UNTIL (V24.Available(portno) > 0) OR (Oberon.Time() >= T);
     IF V24.Available(portno) > 0 THEN V24.Receive(portno, ch, res) ELSE ch := 0X END ;
   END RecByte;
 
-  PROCEDURE RecInt(VAR x: LONGINT);
-      VAR i, k, T: LONGINT; ch: CHAR;
+  PROCEDURE RecInt(VAR x: INTEGER);
+      VAR i, k, T: INTEGER; ch: CHAR;
   BEGIN i := 4; k := 0;
     REPEAT
       DEC(i); V24.Receive(portno, ch, res);
@@ -169,17 +204,17 @@ MODULE  ORC;  (*Connection to RISC; NW 11.11.2013*)
   END RecInt;
 
   PROCEDURE SR*;  (*send, then receive sequence of items*)
-    VAR S: Texts.Scanner; i, k: LONGINT; ch, xch: CHAR;
+    VAR S: Texts.Scanner; i, k: INTEGER; ch, xch: CHAR;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
-    WHILE (S.class # Texts.Char) & (S.c # "~") DO
+    WHILE (S.class # Texts.Char) AND (S.c # "~") DO
       IF S.class = Texts.Int THEN Texts.WriteInt(W, S.i, 6); SendInt(S.i)
       ELSIF S.class = Texts.Real THEN
-        Texts.WriteReal(W, S.x, 12); SendInt(SYSTEM.VAL(LONGINT, S.x))
+        Texts.WriteReal(W, S.x, 12); SendInt(SYSTEM.VAL(INTEGER, S.x))
       ELSIF S.class IN {Texts.Name, Texts.String} THEN
         Texts.Write(W, " "); Texts.WriteString(W, S.s); i := 0;
         REPEAT ch := S.s[i]; V24.Send(portno, ch, res); INC(i) UNTIL ch = 0X
       ELSIF S.class = Texts.Char THEN Texts.Write(W, S.c)
-      ELSE Texts.WriteString(W, "bad value")  
+      ELSE Texts.WriteString(W, "bad value")
       END ;
       Texts.Scan(S)
     END ;
@@ -191,7 +226,7 @@ MODULE  ORC;  (*Connection to RISC; NW 11.11.2013*)
       ELSIF xch = 2X THEN RecInt(k); Texts.WriteHex(W, k)
       ELSIF xch = 3X THEN RecInt(k); Texts.WriteReal(W, SYSTEM.VAL(REAL, k), 15)
       ELSIF xch = 4X THEN Texts.Write(W, " "); V24.Receive(portno, ch, res);
-        WHILE ch > 0X DO Texts.Write(W, ch); V24.Receive(portno, ch, res) END        
+        WHILE ch > 0X DO Texts.Write(W, ch); V24.Receive(portno, ch, res) END
       ELSIF xch = 5X THEN V24.Receive(portno, ch, res); Texts.Write(W, ch)
       ELSIF xch = 6X THEN Texts.WriteLn(W)
       ELSIF xch = 7X THEN Texts.Write(W, "~"); xch := 0X

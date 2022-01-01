@@ -1,3 +1,43 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(* Project Norebo
+ * Copyright (C)2019 Peter De Wachter
+ *
+ * Released under the following notice:
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Display;  (*NW 5.11.2013 / 17.1.2019*)
 (* Adapted for a customizable framebuffer size -- see git history *)
 
@@ -22,7 +62,7 @@ MODULE Display;  (*NW 5.11.2013 / 17.1.2019*)
 
   PROCEDURE Handle*(F: Frame; VAR M: FrameMsg);
   BEGIN
-    IF (F # NIL) & (F.handle # NIL) THEN F.handle(F, M) END
+    IF (F # NIL) AND (F.handle # NIL) THEN F.handle(F, M) END
   END Handle;
 
   (* raster ops *)
@@ -48,8 +88,8 @@ MODULE Display;  (*NW 5.11.2013 / 17.1.2019*)
       FOR i := 1 TO h DO
         SYSTEM.GET(a1, pix);
         IF mode = invert THEN SYSTEM.PUT(a1, pix / mid)
-        ELSIF (mode = replace) & (col = black) THEN (*erase*) SYSTEM.PUT(a1, pix - mid)
-        ELSE (* (mode = paint) OR (mode = replace) & (col # black) *) SYSTEM.PUT(a1, pix + mid)
+        ELSIF (mode = replace) AND (col = black) THEN (*erase*) SYSTEM.PUT(a1, pix - mid)
+        ELSE (* (mode = paint) OR (mode = replace) AND (col # black) *) SYSTEM.PUT(a1, pix + mid)
         END;
         INC(a1, Span)
       END
@@ -62,11 +102,11 @@ MODULE Display;  (*NW 5.11.2013 / 17.1.2019*)
           SYSTEM.PUT(a0, pixl / left);
           FOR a1 := a0+4 TO ar-4 BY 4 DO SYSTEM.GET(a1, pix); SYSTEM.PUT(a1, -pix) END ;
           SYSTEM.PUT(ar, pixr / right)
-        ELSIF (mode = replace) & (col = black) THEN (*erase*)
+        ELSIF (mode = replace) AND (col = black) THEN (*erase*)
           SYSTEM.PUT(a0, pixl - left);
           FOR a1 := a0+4 TO ar-4 BY 4 DO SYSTEM.PUT(a1, {}) END ;
           SYSTEM.PUT(ar, pixr - right)
-        ELSE (* (mode = paint) OR (mode = replace) & (col # black) *)
+        ELSE (* (mode = paint) OR (mode = replace) AND (col # black) *)
           SYSTEM.PUT(a0, pixl + left);
           FOR a1 := a0+4 TO ar-4 BY 4 DO SYSTEM.PUT(a1, {0 .. 31}) END ;
           SYSTEM.PUT(ar, pixr + right)

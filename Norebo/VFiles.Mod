@@ -1,3 +1,43 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(* Project Norebo
+ * Copyright (C)2019 Peter De Wachter
+ *
+ * Released under the following notice:
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE VFiles;  (*dervived from NW 11.1.86 / 22.9.93 / 25.5.95 / 25.12.95 / 15.8.2013*)
   IMPORT SYSTEM, Kernel, VDisk, VFileDir;
 
@@ -55,7 +95,7 @@ MODULE VFiles;  (*dervived from NW 11.1.86 / 22.9.93 / 25.5.95 / 25.12.95 / 15.8
       apos * SS + bpos = current position
       0 <= bpos <= lim <= SS
       0 <= apos <= aleng < PgTabSize
-      (apos < aleng) & (lim = SS) OR (apos = aleng) *)
+      (apos < aleng) AND (lim = SS) OR (apos = aleng) *)
 
   VAR root: INTEGER (*File*);  (*list of open files*)
 
@@ -63,10 +103,10 @@ MODULE VFiles;  (*dervived from NW 11.1.86 / 22.9.93 / 25.5.95 / 25.12.95 / 15.8
         VAR name: VFileDir.FileName; VAR res: INTEGER);
     VAR i: INTEGER; ch: CHAR;
   BEGIN ch := s[0]; i := 0;
-    IF (ch >= "A") & (ch <= "Z") OR (ch >= "a") & (ch <= "z") THEN
+    IF (ch >= "A") AND (ch <= "Z") OR (ch >= "a") AND (ch <= "z") THEN
       REPEAT name[i] := ch; INC(i); ch := s[i]
-      UNTIL ~((ch >= "0") & (ch <= "9") OR (ch >= "A") & (ch <= "Z")
-        OR (ch >= "a") & (ch <= "z") OR (ch = ".")) OR (i = VFileDir.FnLength);
+      UNTIL NOT ((ch >= "0") AND (ch <= "9") OR (ch >= "A") AND (ch <= "Z")
+        OR (ch >= "a") AND (ch <= "z") OR (ch = ".")) OR (i = VFileDir.FnLength);
       IF i = VFileDir.FnLength THEN res := 4
       ELSIF ch = 0X THEN res := 0;
         WHILE i < VFileDir.FnLength DO name[i] := 0X; INC(i) END
@@ -90,7 +130,7 @@ MODULE VFiles;  (*dervived from NW 11.1.86 / 22.9.93 / 25.5.95 / 25.12.95 / 15.8
       VFileDir.Search(V, namebuf, header);
       IF header # 0 THEN
         f := SYSTEM.VAL(File, root);
-        WHILE (f # NIL) & ((f.vdisk # V) OR (f.sec[0] # header)) DO
+        WHILE (f # NIL) AND ((f.vdisk # V) OR (f.sec[0] # header)) DO
           f := SYSTEM.VAL(File, f.next)
         END ;
         IF f = NIL THEN (*file not yet present*)
@@ -185,7 +225,7 @@ MODULE VFiles;  (*dervived from NW 11.1.86 / 22.9.93 / 25.5.95 / 25.12.95 / 15.8
   PROCEDURE Buf(f: File; pos: INTEGER): Buffer;
     VAR buf: Buffer;
   BEGIN buf := f.firstbuf;
-    WHILE (buf.apos # pos) & (buf.next # f.firstbuf) DO buf := buf.next END ;
+    WHILE (buf.apos # pos) AND (buf.next # f.firstbuf) DO buf := buf.next END ;
     IF buf.apos # pos THEN buf := NIL END ;
     RETURN buf
   END Buf;
@@ -193,7 +233,7 @@ MODULE VFiles;  (*dervived from NW 11.1.86 / 22.9.93 / 25.5.95 / 25.12.95 / 15.8
   PROCEDURE GetBuf(f: File; pos: INTEGER): Buffer;
     VAR buf: Buffer;
   BEGIN buf := f.firstbuf;
-    WHILE (buf.apos # pos) & (buf.next # f.firstbuf) DO buf := buf.next END ;
+    WHILE (buf.apos # pos) AND (buf.next # f.firstbuf) DO buf := buf.next END ;
     IF buf.apos # pos THEN
       IF f.nofbufs < MaxBufs THEN  (*allocate new buffer*)
         NEW(buf); buf.next := f.firstbuf.next; f.firstbuf.next := buf; INC(f.nofbufs)
@@ -233,9 +273,9 @@ MODULE VFiles;  (*dervived from NW 11.1.86 / 22.9.93 / 25.5.95 / 25.12.95 / 15.8
 
   PROCEDURE Register*(f: File);
   BEGIN
-    IF (f # NIL) & (f.name[0] # 0X) THEN
+    IF (f # NIL) AND (f.name[0] # 0X) THEN
       Unbuffer(f);
-      IF ~f.registered THEN
+      IF NOT f.registered THEN
         VFileDir.Insert(f.vdisk, f.name, f.sec[0]); f.registered := TRUE; f.next := root; root := SYSTEM.VAL(INTEGER, f)
       END
     END

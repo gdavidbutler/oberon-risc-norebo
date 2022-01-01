@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
   IMPORT Files, Fonts, Texts, Display, Viewers, Oberon, MenuViewers, TextFrames;
 
@@ -5,13 +40,13 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
     StandardMenu = "System.Close System.Copy System.Grow Edit.Search Edit.Store";
 
   VAR W: Texts.Writer;
-    time: LONGINT;
+    time: INTEGER;
     M: INTEGER;
     pat: ARRAY maxlen OF CHAR;
     d: ARRAY 256 OF INTEGER;
 
-  PROCEDURE Max(i, j: LONGINT): LONGINT;
-    VAR m: LONGINT;
+  PROCEDURE Max(i, j: INTEGER): INTEGER;
+    VAR m: INTEGER;
   BEGIN IF i >= j THEN m := i ELSE m := j END ;
     RETURN m
   END Max;
@@ -21,9 +56,9 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
     S: Texts.Scanner;
     V: Viewers.Viewer;
     X, Y: INTEGER;
-    beg, end, time: LONGINT;
+    beg, end, time: INTEGER;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
-    IF (S.class = Texts.Char) & (S.c = "^") OR (S.line # 0) THEN
+    IF (S.class = Texts.Char) AND (S.c = "^") OR (S.line # 0) THEN
       Oberon.GetSelection(T, beg, end, time);
       IF time >= 0 THEN Texts.OpenScanner(S, T, beg); Texts.Scan(S) END
     END;
@@ -42,7 +77,7 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
       T: Texts.Text;
       S: Texts.Scanner;
       f: Files.File; R: Files.Rider;
-      beg, end, time, len: LONGINT;
+      beg, end, time, len: INTEGER;
 
     PROCEDURE Backup (VAR name: ARRAY OF CHAR);
       VAR res, i: INTEGER; bak: ARRAY 32 OF CHAR;
@@ -58,11 +93,11 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
     ELSE V := Oberon.MarkedViewer(); Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos)
     END;
     Texts.Scan(S);
-    IF (S.class = Texts.Char) & (S.c = "^") THEN
+    IF (S.class = Texts.Char) AND (S.c = "^") THEN
       Oberon.GetSelection(T, beg, end, time);
       IF time >= 0 THEN Texts.OpenScanner(S, T, beg); Texts.Scan(S) END
     END;
-    IF (S.class = Texts.Name) & (V.dsc # NIL) & (V.dsc.next IS TextFrames.Frame) THEN
+    IF (S.class = Texts.Name) AND (V.dsc # NIL) AND (V.dsc.next IS TextFrames.Frame) THEN
       Text := V.dsc.next(TextFrames.Frame);
       Texts.WriteString(W, S.s); Texts.WriteInt(W, Text.text.len, 8);
       Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf);
@@ -74,21 +109,21 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
     VAR T: Texts.Text;
       F: TextFrames.Frame;
       v: Viewers.Viewer;
-      beg, end, time: LONGINT;
+      beg, end, time: INTEGER;
       fnt: Fonts.Font; col, voff: INTEGER;
   BEGIN Oberon.GetSelection(T, beg, end, time);
     IF time >= 0 THEN
       v := Oberon.FocusViewer;
-      IF (v # NIL) & (v.dsc # NIL) & (v.dsc.next IS TextFrames.Frame) THEN
+      IF (v # NIL) AND (v.dsc # NIL) AND (v.dsc.next IS TextFrames.Frame) THEN
         F := v.dsc.next(TextFrames.Frame);
         Texts.Attributes(F.text, F.carloc.pos, fnt, col, voff);
         Texts.ChangeLooks(T, beg, end, {0,1,2}, fnt, col, voff)
       END
     END
-  END CopyLooks; 
+  END CopyLooks;
 
   PROCEDURE ChangeFont*;
-    VAR S: Texts.Scanner; T: Texts.Text; beg, end: LONGINT;
+    VAR S: Texts.Scanner; T: Texts.Text; beg, end: INTEGER;
   BEGIN
     Oberon.GetSelection(T, beg, end, time);
     IF time >= 0 THEN
@@ -103,7 +138,7 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
     VAR S: Texts.Scanner;
       T: Texts.Text;
       col: INTEGER;
-      beg, end, time: LONGINT;
+      beg, end, time: INTEGER;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
     IF S.class = Texts.Int THEN
       col := S.i; Oberon.GetSelection(T, beg, end, time);
@@ -115,7 +150,7 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
     VAR S: Texts.Scanner;
       T: Texts.Text;
       voff: INTEGER; ch: CHAR;
-      beg, end, time: LONGINT;
+      beg, end, time: INTEGER;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
     IF S.class = Texts.Int THEN
       voff := S.i; Oberon.GetSelection(T, beg, end, time);
@@ -128,7 +163,7 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
       V: Viewers.Viewer;
       R: Texts.Reader;
       T: Texts.Text;
-      pos, beg, end, prevTime, len: LONGINT; n, i, j: INTEGER;
+      pos, beg, end, prevTime, len: INTEGER; n, i, j: INTEGER;
       buf: ARRAY 32 OF CHAR;
 
     PROCEDURE Forward(n: INTEGER; VAR R: Texts.Reader; VAR buf: ARRAY OF CHAR);
@@ -140,7 +175,7 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
 
   BEGIN V := Oberon.Par.vwr;
     IF Oberon.Par.frame # V.dsc THEN V := Oberon.FocusViewer END;
-    IF (V.dsc # NIL) & (V.dsc.next IS TextFrames.Frame) THEN
+    IF (V.dsc # NIL) AND (V.dsc.next IS TextFrames.Frame) THEN
       Text := V.dsc.next(TextFrames.Frame);
       prevTime := time; Oberon.GetSelection(T, beg, end, time);
       IF time > prevTime THEN
@@ -159,7 +194,7 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
       Forward(M, R, buf); pos := pos + M;
       j := M;
       REPEAT DEC(j) UNTIL (j < 0) OR (buf[j] # pat[j]);
-      WHILE (j >= 0) & (pos < len) DO
+      WHILE (j >= 0) AND (pos < len) DO
         n := d[ORD(buf[M-1])]; Forward(n, R, buf); INC(pos, n); j := M;
         REPEAT DEC(j) UNTIL (j < 0) OR (buf[j] # pat[j])
       END ;
@@ -176,10 +211,10 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
     VAR Text: TextFrames.Frame;
       T: Texts.Text; S: Texts.Scanner;
       V: Viewers.Viewer;
-      beg, end, time: LONGINT;
+      beg, end, time: INTEGER;
   BEGIN
     V := Oberon.FocusViewer;
-    IF (V.dsc # NIL) & (V.dsc.next IS TextFrames.Frame) THEN
+    IF (V.dsc # NIL) AND (V.dsc.next IS TextFrames.Frame) THEN
       Text := V.dsc.next(TextFrames.Frame);
       Oberon.GetSelection(T, beg, end, time);
       IF time >= 0 THEN
@@ -201,10 +236,10 @@ MODULE Edit; (*JG 2.11.90 / NW 28.11.2015*)
     VAR Menu, Main: Display.Frame;
       buf: Texts.Buffer;
       V: Viewers.Viewer;
-      pos: LONGINT;
+      pos: INTEGER;
       M: TextFrames.Frame;
   BEGIN V := Oberon.FocusViewer;
-    IF (V # NIL) & (V IS MenuViewers.Viewer) THEN
+    IF (V # NIL) AND (V IS MenuViewers.Viewer) THEN
       Menu := V.dsc; Main := V.dsc.next;
       IF Main IS TextFrames.Frame THEN
         M := Main(TextFrames.Frame);

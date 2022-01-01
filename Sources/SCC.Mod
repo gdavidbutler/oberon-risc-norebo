@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE SCC; (*NW 13.11.87 / 22.8.90 Ceres-2; nRF24L01+ version PR 21.7.13 / 23.12.13*)
   IMPORT SYSTEM, Kernel;
 
@@ -27,7 +62,7 @@ SubPacket;
   END SPICtrl;
 
   PROCEDURE SPI(n: INTEGER);
-  BEGIN (*send (& rcv into shift reg) one byte or word, at current speed*)
+  BEGIN (*send (and rcv into shift reg) one byte or word, at current speed*)
     SYSTEM.PUT(spiData, n); REPEAT UNTIL SYSTEM.BIT(spiCtrl, 0) (*wait until done*)
   END SPI;
 
@@ -67,7 +102,7 @@ SubPacket;
       REPEAT (*wait for sent or retransmits exceeded*);
         SPI(0FFH); SYSTEM.GET(spiData, status); (*NOP*)
         res := status DIV 10H MOD 4;
-        SPICtrl({}); SPICtrl({netSelect}) (*end & restart NOP cmd, end =10us pulse on enable*)
+        SPICtrl({}); SPICtrl({netSelect}) (*end and restart NOP cmd, end =10us pulse on enable*)
       UNTIL res # 0;
       IF res = 2 THEN WriteReg1(7, 20H) (*TX_DS: sent, ack received; reset it*)
       ELSIF res = 1 THEN WriteReg1(7, 10H); INC(try); (*MAX_RT: retransmits exceeded; reset it*)
@@ -118,11 +153,11 @@ OF BYTE;
     head.sadr := Adr; head.valid := TRUE;
     SYSTEM.COPY(SYSTEM.ADR(head), SYSTEM.ADR(payload), HdrSize DIV 4);
     i := HdrSize; off := 0; len := head.len;
-    WHILE (len > 0) & (i < SubPacket) DO payload[i] := dat[off]; INC(i); INC(off); DEC(len) END;
+    WHILE (len > 0) AND (i < SubPacket) DO payload[i] := dat[off]; INC(i); INC(off); DEC(len) END;
     WHILE i < SubPacket DO payload[i] := 0; INC(i) END;
     SubSnd(SYSTEM.ADR(payload), timeout);
-    WHILE ~timeout & (len # 0) DO i := 0; (*send the rest*)
-      WHILE (len > 0) & (i < SubPacket) DO payload[i] := dat[off]; INC(i); INC(off); DEC(len) END;
+    WHILE NOT timeout AND (len # 0) DO i := 0; (*send the rest*)
+      WHILE (len > 0) AND (i < SubPacket) DO payload[i] := dat[off]; INC(i); INC(off); DEC(len) END;
       WHILE i < SubPacket DO payload[i] := 0; INC(i) END;
       SubSnd(SYSTEM.ADR(payload), timeout)
     END;
@@ -145,7 +180,7 @@ OF BYTE;
     REPEAT
       SPICtrl({netEnable, netSelect}); SPI(17H); (*R_REGISTER FIFO_STATUS*)
       SYSTEM.GET(spiData, status); SPI(-1); SYSTEM.GET(spiData, fifoStatus); SPICtrl({netEnable});
-      rcvd := ODD(status DIV 40H) OR ~ODD(fifoStatus) (*RX_DR (data ready) or RX FIFO not empty*)
+      rcvd := ODD(status DIV 40H) OR NOT ODD(fifoStatus) (*RX_DR (data ready) or RX FIFO not empty*)
     UNTIL rcvd OR (Kernel.Time() >= time);
     RETURN rcvd
   END Rcvd;
@@ -157,8 +192,8 @@ OF BYTE;
       ResetRcv; adr := SYSTEM.ADR(rx); SubRcv(adr);
       n := (rx.hd.len + HdrSize - 1) DIV SubPacket;
       IF (rx.hd.len <= MaxPayload)
-          & ((rx.hd.dadr = 0FFH) OR ~filter OR (Adr = 0) OR (rx.hd.dadr = Adr)) THEN
-        WHILE (n > 0) & Rcvd(Wait) DO
+          AND ((rx.hd.dadr = 0FFH) OR NOT filter OR (Adr = 0) OR (rx.hd.dadr = Adr)) THEN
+        WHILE (n > 0) AND Rcvd(Wait) DO
           INC(adr, SubPacket); SubRcv(adr); DEC(n)
         END;
         rx.hd.valid := (n = 0)

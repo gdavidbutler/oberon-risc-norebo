@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
   IMPORT SYSTEM, Texts, Oberon;
 
@@ -9,11 +44,11 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
   Mark(msg) records error and delivers error message with Writer W.
   If Get delivers ident, then the identifier (a string) is in variable id, if int or char
   in ival, if real in rval, and if string in str (and slen) *)
-  
+
   CONST IdLen* = 32;
-    NKW = 34;  (*nof keywords*)
+    NKW = 36;  (*nof keywords*)
     maxExp = 38; stringBufSize = 256;
-  
+
     (*lexical symbols*)
     null = 0; times* = 1; rdiv* = 2; div* = 3; mod* = 4;
     and* = 5; plus* = 6; minus* = 7; or* = 8; eql* = 9;
@@ -32,33 +67,33 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
 
   TYPE Ident* = ARRAY IdLen OF CHAR;
 
-  VAR ival*, slen*: LONGINT;  (*results of Get*)
+  VAR ival*, slen*: INTEGER;  (*results of Get*)
     rval*: REAL;
     id*: Ident;  (*for identifiers*)
     str*: ARRAY stringBufSize OF CHAR;
     errcnt*: INTEGER;
 
     ch: CHAR;  (*last character read*)
-    errpos: LONGINT;
+    errpos: INTEGER;
     R: Texts.Reader;
     W: Texts.Writer;
     k: INTEGER;
     KWX: ARRAY 10 OF INTEGER;
     keyTab: ARRAY NKW OF
         RECORD sym: INTEGER; id: ARRAY 12 OF CHAR END;
-  
+
   PROCEDURE CopyId*(VAR ident: Ident);
   BEGIN ident := id
   END CopyId;
 
-  PROCEDURE Pos*(): LONGINT;
+  PROCEDURE Pos*(): INTEGER;
   BEGIN RETURN Texts.Pos(R) - 1
   END Pos;
 
   PROCEDURE Mark*(msg: ARRAY OF CHAR);
-    VAR p: LONGINT;
+    VAR p: INTEGER;
   BEGIN p := Pos();
-    IF (p > errpos) & (errcnt < 25) THEN
+    IF (p > errpos) AND (errcnt < 25) THEN
       Texts.WriteLn(W); Texts.WriteString(W, "  pos "); Texts.WriteInt(W, p, 1); Texts.Write(W, " ");
       Texts.WriteString(W, msg); Texts.Append(Oberon.Log, W.buf)
     END ;
@@ -71,10 +106,10 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
     REPEAT
       IF i < IdLen-1 THEN id[i] := ch; INC(i) END ;
       Texts.Read(R, ch)
-    UNTIL (ch < "0") OR (ch > "9") & (ch < "A") OR (ch > "Z") & (ch < "a") OR (ch > "z");
-    id[i] := 0X; 
+    UNTIL (ch < "0") OR (ch > "9") AND (ch < "A") OR (ch > "Z") AND (ch < "a") OR (ch > "z");
+    id[i] := 0X;
     IF i < 10 THEN k := KWX[i-1];  (*search for keyword*)
-      WHILE (id # keyTab[k].id) & (k < KWX[i]) DO INC(k) END ;
+      WHILE (id # keyTab[k].id) AND (k < KWX[i]) DO INC(k) END ;
       IF k < KWX[i] THEN sym := keyTab[k].sym ELSE sym := ident END
     ELSE sym := ident
     END
@@ -83,7 +118,7 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
   PROCEDURE String;
     VAR i: INTEGER;
   BEGIN i := 0; Texts.Read(R, ch);
-    WHILE ~R.eot & (ch # 22X) DO
+    WHILE NOT R.eot AND (ch # 22X) DO
       IF ch >= " " THEN
         IF i < stringBufSize-1 THEN str[i] := ch; INC(i) ELSE Mark("string too long") END ;
       END ;
@@ -95,15 +130,15 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
   PROCEDURE HexString;
     VAR i, m, n: INTEGER;
   BEGIN i := 0; Texts.Read(R, ch);
-    WHILE ~R.eot & (ch # "$") DO
-      WHILE ~R.eot  & (ch <= " ") DO Texts.Read(R, ch) END ;  (*skip*)
-      IF ("0" <= ch) & (ch <= "9") THEN m := ORD(ch) - 30H
-      ELSIF ("A" <= ch) & (ch <= "F") THEN m := ORD(ch) - 37H
+    WHILE NOT R.eot AND (ch # "$") DO
+      WHILE NOT R.eot AND (ch <= " ") DO Texts.Read(R, ch) END ;  (*skip*)
+      IF ("0" <= ch) AND (ch <= "9") THEN m := ORD(ch) - 30H
+      ELSIF ("A" <= ch) AND (ch <= "F") THEN m := ORD(ch) - 37H
       ELSE m := 0; Mark("hexdig expected")
       END ;
       Texts.Read(R, ch);
-      IF ("0" <= ch) & (ch <= "9") THEN n := ORD(ch) - 30H
-      ELSIF ("A" <= ch) & (ch <= "F") THEN n := ORD(ch) - 37H
+      IF ("0" <= ch) AND (ch <= "9") THEN n := ORD(ch) - 30H
+      ELSIF ("A" <= ch) AND (ch <= "F") THEN n := ORD(ch) - 37H
       ELSE n := 0; Mark("hexdig expected")
       END ;
       IF i < stringBufSize THEN str[i] := CHR(m*10H + n); INC(i) ELSE Mark("string too long") END ;
@@ -112,7 +147,7 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
     Texts.Read(R, ch); slen := i  (*no 0X appended!*)
   END HexString;
 
-  PROCEDURE Ten(e: LONGINT): REAL;
+  PROCEDURE Ten(e: INTEGER): REAL;
     VAR x, t: REAL;
   BEGIN x := 1.0; t := 10.0;
     WHILE e > 0 DO
@@ -124,14 +159,14 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
 
   PROCEDURE Number(VAR sym: INTEGER);
     CONST max = 2147483647 (*2^31 - 1*);
-    VAR i, k, e, n, s, h: LONGINT; x: REAL;
+    VAR i, k, e, n, s, h: INTEGER; x: REAL;
       d: ARRAY 16 OF INTEGER;
       negE: BOOLEAN;
   BEGIN ival := 0; i := 0; n := 0; k := 0;
     REPEAT
       IF n < 16 THEN d[n] := ORD(ch)-30H; INC(n) ELSE Mark("too many digits"); n := 0 END ;
       Texts.Read(R, ch)
-    UNTIL (ch < "0") OR (ch > "9") & (ch < "A") OR (ch > "F");
+    UNTIL (ch < "0") OR (ch > "9") AND (ch < "A") OR (ch > "F");
     IF (ch = "H") OR (ch = "R") OR (ch = "X") THEN  (*hex*)
       REPEAT h := d[i];
         IF h >= 10 THEN h := h-7 END ;
@@ -156,16 +191,16 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
         sym := int; ival := k
       ELSE (*real number*) x := 0.0; e := 0;
         REPEAT  (*integer part*) x := x * 10.0 + FLT(d[i]); INC(i) UNTIL i = n;
-        WHILE (ch >= "0") & (ch <= "9") DO  (*fraction*)
+        WHILE (ch >= "0") AND (ch <= "9") DO  (*fraction*)
           x := x * 10.0 + FLT(ORD(ch) - 30H); DEC(e); Texts.Read(R, ch)
         END ;
         IF (ch = "E") OR (ch = "D") THEN  (*scale factor*)
-          Texts.Read(R, ch); s := 0; 
+          Texts.Read(R, ch); s := 0;
           IF ch = "-" THEN negE := TRUE; Texts.Read(R, ch)
           ELSE negE := FALSE;
             IF ch = "+" THEN Texts.Read(R, ch) END
           END ;
-          IF (ch >= "0") & (ch <= "9") THEN
+          IF (ch >= "0") AND (ch <= "9") THEN
             REPEAT s := s*10 + ORD(ch)-30H; Texts.Read(R, ch)
             UNTIL (ch < "0") OR (ch >"9");
             IF negE THEN e := e-s ELSE e := e+s END
@@ -194,7 +229,7 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
   PROCEDURE comment;
   BEGIN Texts.Read(R, ch);
     REPEAT
-      WHILE ~R.eot & (ch # "*") DO
+      WHILE NOT R.eot AND (ch # "*") DO
         IF ch = "(" THEN Texts.Read(R, ch);
           IF ch = "*" THEN comment END
         ELSE Texts.Read(R, ch)
@@ -202,21 +237,20 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
       END ;
       WHILE ch = "*" DO Texts.Read(R, ch) END
     UNTIL (ch = ")") OR R.eot;
-    IF ~R.eot THEN Texts.Read(R, ch) ELSE Mark("unterminated comment") END
+    IF NOT R.eot THEN Texts.Read(R, ch) ELSE Mark("unterminated comment") END
   END comment;
 
   PROCEDURE Get*(VAR sym: INTEGER);
   BEGIN
     REPEAT
-      WHILE ~R.eot & (ch <= " ") DO Texts.Read(R, ch) END;
+      WHILE NOT R.eot AND (ch <= " ") DO Texts.Read(R, ch) END;
       IF R.eot THEN sym := eot
       ELSIF ch < "A" THEN
         IF ch < "0" THEN
           IF ch = 22X THEN String; sym := string
           ELSIF ch = "#" THEN Texts.Read(R, ch); sym := neq
           ELSIF ch = "$" THEN HexString; sym := string
-          ELSIF ch = "&" THEN Texts.Read(R, ch); sym := and
-          ELSIF ch = "(" THEN Texts.Read(R, ch); 
+          ELSIF ch = "(" THEN Texts.Read(R, ch);
             IF ch = "*" THEN sym := null; comment ELSE sym := lparen END
           ELSIF ch = ")" THEN Texts.Read(R, ch); sym := rparen
           ELSIF ch = "*" THEN Texts.Read(R, ch); sym := times
@@ -230,7 +264,7 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
           END
         ELSIF ch < ":" THEN Number(sym)
         ELSIF ch = ":" THEN Texts.Read(R, ch);
-          IF ch = "=" THEN Texts.Read(R, ch); sym := becomes ELSE sym := colon END 
+          IF ch = "=" THEN Texts.Read(R, ch); sym := becomes ELSE sym := colon END
         ELSIF ch = ";" THEN Texts.Read(R, ch); sym := semicolon
         ELSIF ch = "<" THEN  Texts.Read(R, ch);
           IF ch = "=" THEN Texts.Read(R, ch); sym := leq ELSE sym := lss END
@@ -251,7 +285,6 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
         IF ch = "{" THEN sym := lbrace
         ELSIF ch = "}" THEN sym := rbrace
         ELSIF ch = "|" THEN sym := bar
-        ELSIF ch = "~" THEN  sym := not
         ELSIF ch = 7FX THEN  sym := upto
         ELSE sym := null
         END ;
@@ -260,7 +293,7 @@ MODULE ORS; (* NW 19.9.93 / 15.3.2017  Scanner in Oberon-07*)
     UNTIL sym # null
   END Get;
 
-  PROCEDURE Init*(T: Texts.Text; pos: LONGINT);
+  PROCEDURE Init*(T: Texts.Text; pos: INTEGER);
   BEGIN errpos := pos; errcnt := 0; Texts.OpenReader(R, T, pos); Texts.Read(R, ch)
   END Init;
 
@@ -281,6 +314,8 @@ BEGIN Texts.OpenWriter(W); k := 0; KWX[0] := 0; KWX[1] := 0;
   EnterKW(end, "END");
   EnterKW(nil, "NIL");
   EnterKW(var, "VAR");
+  EnterKW(not, "NOT");
+  EnterKW(and, "AND");
   EnterKW(div, "DIV");
   EnterKW(mod, "MOD");
   EnterKW(for, "FOR");

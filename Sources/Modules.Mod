@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Modules;  (*Link and load on RISC; NW 20.10.2013 / 8.1.2019*)
   IMPORT SYSTEM, Files;
   CONST versionkey = 1X; MT = 12; DescSize = 80;
@@ -34,11 +69,11 @@ MODULE Modules;  (*Link and load on RISC; NW 20.10.2013 / 8.1.2019*)
   PROCEDURE Check(s: ARRAY OF CHAR);
     VAR i: INTEGER; ch: CHAR;
   BEGIN ch := s[0]; res := 1; i := 1;
-    IF (ch >= "A") & (ch <= "Z") OR (ch >= "a") & (ch <= "z") THEN
+    IF (ch >= "A") AND (ch <= "Z") OR (ch >= "a") AND (ch <= "z") THEN
       REPEAT ch := s[i]; INC(i)
-      UNTIL ~((ch >= "0") & (ch <= "9") OR (ch >= "A") & (ch <= "Z")
-        OR (ch >= "a") & (ch <= "z") OR (ch = ".")) OR (i = 32);
-      IF (i < 32) & (ch = 0X) THEN res := 0 END
+      UNTIL NOT ((ch >= "0") AND (ch <= "9") OR (ch >= "A") AND (ch <= "Z")
+        OR (ch >= "a") AND (ch <= "z") OR (ch = ".")) OR (i = 32);
+      IF (i < 32) AND (ch = 0X) THEN res := 0 END
     END
   END Check;
 
@@ -57,7 +92,7 @@ MODULE Modules;  (*Link and load on RISC; NW 20.10.2013 / 8.1.2019*)
       F: Files.File; R: Files.Rider;
       import: ARRAY 16 OF Module;
   BEGIN mod := root; error(0, name); nofimps := 0;
-    WHILE (mod # NIL) & (name # mod.name) DO mod := mod.next END ;
+    WHILE (mod # NIL) AND (name # mod.name) DO mod := mod.next END ;
     IF mod = NIL THEN (*load*)
       Check(name);
       IF res = 0 THEN F := ThisFile(name) ELSE F := NIL END ;
@@ -66,7 +101,7 @@ MODULE Modules;  (*Link and load on RISC; NW 20.10.2013 / 8.1.2019*)
         Files.ReadInt(R, size); importing := name1;
         IF ch = versionkey THEN
           Files.ReadString(R, impname);   (*imports*)
-          WHILE (impname[0] # 0X) & (res = 0) DO
+          WHILE (impname[0] # 0X) AND (res = 0) DO
             Files.ReadInt(R, impkey);
             Load(impname, impmod); import[nofimps] := impmod; importing := name1;
             IF res = 0 THEN
@@ -82,7 +117,7 @@ MODULE Modules;  (*Link and load on RISC; NW 20.10.2013 / 8.1.2019*)
       END ;
       IF res = 0 THEN (*search for a hole in the list allocate and link*)
         INC(size, DescSize); mod := root;
-        WHILE (mod # NIL) & ~((mod.name[0] = 0X) & (mod.size >= size)) DO mod := mod.next END ;
+        WHILE (mod # NIL) AND NOT ((mod.name[0] = 0X) AND (mod.size >= size)) DO mod := mod.next END ;
         IF mod = NIL THEN (*no large enough hole was found*)
           IF AllocPtr + size < limit THEN (*allocate*)
             p := AllocPtr; mod := SYSTEM.VAL(Module, p);
@@ -92,7 +127,7 @@ MODULE Modules;  (*Link and load on RISC; NW 20.10.2013 / 8.1.2019*)
           END
         ELSE (*fill hole*) p := SYSTEM.VAL(INTEGER, mod)
         END
-      END ; 
+      END ;
       IF res = 0 THEN (*read file*)
         INC(p, DescSize); (*allocate descriptor*)
         mod.name := name; mod.key := key; mod.refcnt := 0;
@@ -180,7 +215,7 @@ MODULE Modules;  (*Link and load on RISC; NW 20.10.2013 / 8.1.2019*)
         body   (*initialize module*)
       ELSIF res >= 3 THEN importing := name;
         WHILE nofimps > 0 DO DEC(nofimps); DEC(import[nofimps].refcnt) END
-      END 
+      END
     END ;
     newmod :=  mod
   END Load;
@@ -191,7 +226,7 @@ MODULE Modules;  (*Link and load on RISC; NW 20.10.2013 / 8.1.2019*)
   BEGIN res := 5; w := 0;
     IF mod # NIL THEN
       adr := mod.cmd; SYSTEM.GET(adr, ch);
-      WHILE (ch # 0X) & (res # 0) DO k := 0; (*read command name*)
+      WHILE (ch # 0X) AND (res # 0) DO k := 0; (*read command name*)
         REPEAT s[k] := ch; INC(k); INC(adr); SYSTEM.GET(adr, ch) UNTIL ch = 0X;
         s[k] := 0X;
         REPEAT INC(adr) UNTIL adr MOD 4 = 0;
@@ -205,7 +240,7 @@ MODULE Modules;  (*Link and load on RISC; NW 20.10.2013 / 8.1.2019*)
   PROCEDURE Free*(name: ARRAY OF CHAR);
     VAR mod, imp: Module; p, q: INTEGER;
   BEGIN mod := root; res := 0;
-    WHILE (mod # NIL) & (mod.name # name) DO mod := mod.next END ;
+    WHILE (mod # NIL) AND (mod.name # name) DO mod := mod.next END ;
     IF mod # NIL THEN
       IF mod.refcnt = 0 THEN
         mod.name[0] := 0X; p := mod.imp; q := mod.cmd;

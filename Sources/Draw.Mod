@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Draw; (*NW 29.6.88 / 12.11.94 / 18.11.2013*)
 
   IMPORT Files, Fonts, Viewers, Texts, Oberon,
@@ -14,14 +49,14 @@ MODULE Draw; (*NW 29.6.88 / 12.11.94 / 18.11.2013*)
 
   PROCEDURE Open*;
     VAR X, Y: INTEGER;
-      beg, end, t: LONGINT;
+      beg, end, t: INTEGER;
       G: Graphics.Graph;
       F: GraphicFrames.Frame;
       V: Viewers.Viewer;
       S: Texts.Scanner;
       text: Texts.Text;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
-    IF (S.class = Texts.Char) & (S.c = "^") THEN
+    IF (S.class = Texts.Char) AND (S.c = "^") THEN
       Oberon.GetSelection(text, beg, end, t);
       IF t >= 0 THEN Texts.OpenScanner(S, text, beg); Texts.Scan(S) END
     END ;
@@ -43,9 +78,9 @@ MODULE Draw; (*NW 29.6.88 / 12.11.94 / 18.11.2013*)
   END Delete;
 
   PROCEDURE GetArg(VAR S: Texts.Scanner);
-    VAR T: Texts.Text; beg, end, time: LONGINT;
+    VAR T: Texts.Text; beg, end, time: INTEGER;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
-    IF (S.class = Texts.Char) & (S.c = "^") THEN
+    IF (S.class = Texts.Char) AND (S.c = "^") THEN
       Oberon.GetSelection(T, beg, end, time);
       IF time >= 0 THEN Texts.OpenScanner(S, T, beg); Texts.Scan(S) END
     END
@@ -54,7 +89,7 @@ MODULE Draw; (*NW 29.6.88 / 12.11.94 / 18.11.2013*)
   PROCEDURE SetWidth*;
     VAR S: Texts.Scanner;
   BEGIN GetArg(S);
-    IF (S.class = Texts.Int) & (S.i > 0) & (S.i < 7) THEN Graphics.SetWidth(S.i) END
+    IF (S.class = Texts.Int) AND (S.i > 0) AND (S.i < 7) THEN Graphics.SetWidth(S.i) END
   END SetWidth;
 
   PROCEDURE ChangeColor*;
@@ -88,8 +123,8 @@ MODULE Draw; (*NW 29.6.88 / 12.11.94 / 18.11.2013*)
     IF Oberon.Par.frame = Oberon.Par.vwr.dsc THEN v := Oberon.Par.vwr
     ELSE v := Oberon.MarkedViewer()
     END ;
-    IF (v # NIL) & (v.dsc # NIL) & (v.dsc.next IS GraphicFrames.Frame) THEN
-      G := v.dsc.next(GraphicFrames.Frame); G.ticked := Q OR ~G.ticked; GraphicFrames.Restore(G)
+    IF (v # NIL) AND (v.dsc # NIL) AND (v.dsc.next IS GraphicFrames.Frame) THEN
+      G := v.dsc.next(GraphicFrames.Frame); G.ticked := Q OR NOT G.ticked; GraphicFrames.Restore(G)
     END
   END Redraw;
 
@@ -129,7 +164,7 @@ MODULE Draw; (*NW 29.6.88 / 12.11.94 / 18.11.2013*)
       Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
       IF S.class = Texts.Name THEN
         v := Oberon.MarkedViewer();
-        IF (v.dsc # NIL) & (v.dsc.next IS GraphicFrames.Frame) THEN
+        IF (v.dsc # NIL) AND (v.dsc.next IS GraphicFrames.Frame) THEN
           G := v.dsc.next(GraphicFrames.Frame);
           Texts.WriteString(W, S.s); Texts.WriteString(W, " storing");
           Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf);
@@ -142,7 +177,7 @@ MODULE Draw; (*NW 29.6.88 / 12.11.94 / 18.11.2013*)
   PROCEDURE Macro*;
     VAR S: Texts.Scanner;
       T: Texts.Text;
-      time, beg, end: LONGINT;
+      time, beg, end: INTEGER;
       Lname: ARRAY 32 OF CHAR;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
     IF S.class = Texts.Name THEN

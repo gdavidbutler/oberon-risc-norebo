@@ -6,11 +6,11 @@ won't work, but e.g. the compiler runs.
 
 ## License
 
-This repository is licensed under GPL v3 (see LICENSE).
+This repository is licensed under AGPL-3.0-or-later (see LICENSE).
 
 The file `required-copyright-and-permission-notice.txt` is included, as required,
 but *only* applies to the initial fork of this repository and the first commit of
-original files in the `Sources` and `SourcesVerilog` directories from:
+original files in the `Sources`, `SourcesVerilog` and `Fnt` directories from:
 
 * http://people.inf.ethz.ch/wirth/ProjectOberon/
 * http://www.projectoberon.com
@@ -38,6 +38,19 @@ in the repository using ASCII LF (0A hex) for end-of-line.
 
 The procedure VDiskUtil.InstallFiles converts LF to CR.
 
+## Oberon Language changes
+
+There is no reason to carry these synonyms to a new processor:
+
+* LONGINT and LONGREAL are gone
+
+For text/symbol consistency either "OR" needs to become '|'
+or '~' and '&' should become "NOT" and "AND", respectively.
+I choose the latter:
+
+* use NOT instead of ~
+* use AND instead of &
+
 ## PO2013 image build tools
 
 This repository also contains tools to build PO2013 filesystem images.
@@ -46,7 +59,7 @@ Use it like so:
     ./build-host.sh
 
 This will compile Sources and create a runnable disk image
-`build/Oberon.dsk`. The disk image can be run
+`build-host/Oberon.dsk`. The disk image can be run
 on the [Project Oberon RISC emulator].
 
 Supporting Oberon modules are stored in `Norebo`: a virtual file

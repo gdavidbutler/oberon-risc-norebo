@@ -1,4 +1,39 @@
-ORP.Compile @  
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
+ORP.Compile @
 ORX.WriteFile BootLoad.rsc 512 "D:/Verilog/RISC5/prom.mem"~
 
 MODULE* BootLoad;  (*NW 20.10.2013 / PR 4.2.2014; boot from SDHC disk or line*)
@@ -40,7 +75,7 @@ MODULE* BootLoad;  (*NW 20.10.2013 / PR 4.2.2014; boot from SDHC disk or line*)
     END
   END SPIIdle;
 
-  PROCEDURE SPI(n: INTEGER); (*send&rcv byte slowly with card selected*)
+  PROCEDURE SPI(n: INTEGER); (*send and rcv byte slowly with card selected*)
   BEGIN SYSTEM.PUT(spiCtrl, CARD0); SYSTEM.PUT(spiData, n);
     REPEAT UNTIL SYSTEM.BIT(spiCtrl, 0)
   END SPI;
@@ -78,7 +113,7 @@ MODULE* BootLoad;  (*NW 20.10.2013 / PR 4.2.2014; boot from SDHC disk or line*)
     VAR data: INTEGER;
   BEGIN SPICmd(58, 0);  (*CMD58 get card capacity bit*)
     SYSTEM.GET(spiData, data); SPI(-1);
-    IF (data # 0) OR ~SYSTEM.BIT(spiData, 6) THEN n := n * 512 END ;  (*non-SDHC card*)
+    IF (data # 0) OR NOT SYSTEM.BIT(spiData, 6) THEN n := n * 512 END ;  (*non-SDHC card*)
     SPI(-1); SPI(-1); SPIIdle(1)  (*flush response*)
   END SDShift;
 
@@ -115,7 +150,7 @@ END BootLoad.
 
 ORP.Compile @  ORG.Decode
 ORX.WriteFile BootLoad.rsc "Spartan" "D:/Verilog/RISC/scripts/ins1.mem"~
-ORG.WriteFile BootLoad.rsc "Spartan" "D:/Verilog/RISC3/scripts/ins1.mem" ~
+ORG.WriteFile BootLoad.rsc "Spartan" "D:/Verilog/RISC3/scripts/ins1.mem"~
 ORG.WriteFile BootLoad.rsc "Spartan" "D:/Verilog/RISC5/scripts/ins1.mem"~
 
 MODULE* BootLoad;  (*NW 10.2.2013, boot from line only*)
@@ -144,8 +179,8 @@ MODULE* BootLoad;  (*NW 10.2.2013, boot from line only*)
     SYSTEM.GET(4, adr); SYSTEM.LDREG(13, adr); SYSTEM.LDREG(12, 20H)
   END Load;
 
-BEGIN SYSTEM.LDREG(SP, StkOrg); SYSTEM.LDREG(MT, 20H); SYSTEM.PUT(led, 128); 
-  IF ~SYSTEM.BIT(swi, 0) THEN Load END
+BEGIN SYSTEM.LDREG(SP, StkOrg); SYSTEM.LDREG(MT, 20H); SYSTEM.PUT(led, 128);
+  IF NOT SYSTEM.BIT(swi, 0) THEN Load END
 END BootLoad.
 
 ORP.Compile @  ORG.Decode

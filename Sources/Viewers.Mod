@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Viewers; (*JG 14.9.90 / NW 15.9.2013*)
   IMPORT Display;
 
@@ -25,14 +60,14 @@ MODULE Viewers; (*JG 14.9.90 / NW 15.9.2013*)
   PROCEDURE Open* (V: Viewer; X, Y: INTEGER);
     VAR T, u, v: Display.Frame; M: ViewerMsg;
   BEGIN
-    IF (V.state = 0) & (X < inf) THEN
+    IF (V.state = 0) AND (X < inf) THEN
       IF Y > DH THEN Y := DH END;
       T := FillerTrack.next;
       WHILE X >= T.X + T.W DO T := T.next END;
       u := T.dsc; v := u.next;
       WHILE Y > v.Y + v.H DO u := v; v := u.next END;
       IF Y < v.Y + minH THEN Y := v.Y + minH END;
-      IF (v.next.Y # 0) & (Y > v.Y + v.H - minH) THEN
+      IF (v.next.Y # 0) AND (Y > v.Y + v.H - minH) THEN
         V.X := T.X; V.W := T.W; V.Y := v.Y; V.H := v.H;
         M.id := suspend; M.state := 0;
         v.handle(v, M); v(Viewer).state := 0;
@@ -51,7 +86,7 @@ MODULE Viewers; (*JG 14.9.90 / NW 15.9.2013*)
     IF V.state > 1 THEN
       IF Y > DH THEN Y := DH END;
       v := V.next;
-      IF (v.next.Y # 0) & (Y > v.Y + v.H - minH) THEN Y := v.Y + v.H - minH END;
+      IF (v.next.Y # 0) AND (Y > v.Y + v.H - minH) THEN Y := v.Y + v.H - minH END;
       IF Y >= V.Y + minH THEN
         M.id := modify; M.Y := Y; M.H := v.Y + v.H - Y;
         v.handle(v, M); v.Y := M.Y; v.H := M.H; V.H := Y - V.Y
@@ -101,7 +136,7 @@ MODULE Viewers; (*JG 14.9.90 / NW 15.9.2013*)
   PROCEDURE This* (X, Y: INTEGER): Viewer;
     VAR T, V: Display.Frame;
   BEGIN
-    IF (X < inf) & (Y < DH) THEN
+    IF (X < inf) AND (Y < DH) THEN
       T := FillerTrack;
       REPEAT T := T.next UNTIL X < T.X + T.W;
       V := T.dsc;
@@ -124,7 +159,7 @@ MODULE Viewers; (*JG 14.9.90 / NW 15.9.2013*)
       fil := T.dsc; bot := fil.next;
       IF bot.next # fil THEN
         alt := bot.next; V := alt.next;
-        WHILE (V # fil) & (alt.H < H) DO
+        WHILE (V # fil) AND (alt.H < H) DO
           IF V.H > alt.H THEN alt := V END;
           V := V.next
         END
@@ -156,7 +191,7 @@ MODULE Viewers; (*JG 14.9.90 / NW 15.9.2013*)
   PROCEDURE OpenTrack* (X, W: INTEGER; Filler: Viewer);
     VAR newT: Track; S, T, t, v: Display.Frame; M: ViewerMsg; v0: Viewer;
   BEGIN
-    IF (X < inf) & (Filler.state = 0) THEN
+    IF (X < inf) AND (Filler.state = 0) THEN
       S := FillerTrack; T := S.next;
       WHILE X >= T.X + T.W DO S := T; T := S.next END;
       WHILE X + W > T.X + T.W DO T := T.next END;
@@ -191,7 +226,7 @@ MODULE Viewers; (*JG 14.9.90 / NW 15.9.2013*)
     VAR T, V: Display.Frame;
   BEGIN T := FillerTrack.next;
     WHILE T # FillerTrack DO
-      V := T.dsc; 
+      V := T.dsc;
       REPEAT V := V.next; V.handle(V, M) UNTIL V = T.dsc;
       T := T.next
     END

@@ -1,5 +1,40 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Net; (*NW 3.7.88 / 25.8.91 / PR 7.8.13 / 9.12.13*)
-  IMPORT SYSTEM, SCC, Files, Viewers, Texts, TextFrames, MenuViewers, Oberon;
+  IMPORT SCC, Files, Texts, TextFrames, Oberon;
 
   CONST PakSize = 512;
     (*T0 = 300; T1 = 1000; (*timeouts*)*)
@@ -24,23 +59,23 @@ MODULE Net; (*NW 3.7.88 / 25.8.91 / PR 7.8.13 / 9.12.13*)
   BEGIN head0.typ := t; head0.len := L; SCC.SendPacket(head0, data)
   END Send;
 
-  PROCEDURE ReceiveHead(timeout: LONGINT);
-    VAR time: LONGINT;
+  PROCEDURE ReceiveHead(timeout: INTEGER);
+    VAR time: INTEGER;
   BEGIN time := Oberon.Time() + timeout;
     REPEAT
       SCC.ReceiveHead(head1);
-      IF head1.valid & (head1.sadr # head0.dadr) THEN
+      IF head1.valid AND (head1.sadr # head0.dadr) THEN
         SCC.Skip(head1.len); head1.valid := FALSE
       END;
-      IF ~head1.valid & (Oberon.Time() >= time) THEN head1.typ := 0FFH END
+      IF NOT head1.valid AND (Oberon.Time() >= time) THEN head1.typ := 0FFH END
     UNTIL head1.valid OR (head1.typ = 0FFH)
   END ReceiveHead;
 
   PROCEDURE FindPartner(name: ARRAY OF CHAR; VAR res: INTEGER);
-    VAR time: LONGINT; k: INTEGER;
+    VAR time: INTEGER; k: INTEGER;
       Id: ARRAY 8 OF CHAR; IdB: ARRAY 8 OF BYTE;
   BEGIN SCC.Skip(SCC.Available()); res := 0; k := 0;
-    WHILE (k < 7) & (name[k] # 0X) DO Id[k] := name[k]; IdB[k] := ORD(Id[k]); INC(k) END;
+    WHILE (k < 7) AND (name[k] # 0X) DO Id[k] := name[k]; IdB[k] := ORD(Id[k]); INC(k) END;
     Id[k] := 0X; IdB[k] := 0; (* <-- also terminate IdB *)
     IF Id # partner THEN
       head0.dadr := 0FFH; Send(NRQ, k+1, IdB); time := Oberon.Time() + T1;
@@ -62,7 +97,7 @@ MODULE Net; (*NW 3.7.88 / 25.8.91 / PR 7.8.13 / 9.12.13*)
     REPEAT ch := s[i]; d[k] := ORD(ch); INC(i); INC(k) UNTIL ch = 0X
   END AppendS;
 
-  PROCEDURE AppendW(s: LONGINT; VAR d: ARRAY OF BYTE;
+  PROCEDURE AppendW(s: INTEGER; VAR d: ARRAY OF BYTE;
       n: INTEGER; VAR k: INTEGER);
     VAR i: INTEGER;
   BEGIN i := 0;
@@ -75,7 +110,7 @@ MODULE Net; (*NW 3.7.88 / 25.8.91 / PR 7.8.13 / 9.12.13*)
     REPEAT SCC.Receive(x); s[i] := CHR(x); INC(i) UNTIL x = 0
   END PickS;
 
-  PROCEDURE PickQ(VAR w: LONGINT);
+  PROCEDURE PickQ(VAR w: INTEGER);
     VAR x0, x1, x2, x3: BYTE;
   BEGIN SCC.Receive(x0); SCC.Receive(x1); SCC.Receive(x2); SCC.Receive(x3);
     w := x0 + 100H * (x1 + 100H * (x2 + 100H * x3))
@@ -84,13 +119,13 @@ MODULE Net; (*NW 3.7.88 / 25.8.91 / PR 7.8.13 / 9.12.13*)
   PROCEDURE SendData(F: Files.File);
     VAR k, seqno: INTEGER;
       x: BYTE;
-      len: LONGINT;
+      len: INTEGER;
       R: Files.Rider;
       buf: ARRAY PakSize OF BYTE;
   BEGIN Files.Set(R, F, 0); len := 0; seqno := 0;
     REPEAT k := 0;
       REPEAT Files.ReadByte(R, x);
-        IF ~R.eof THEN buf[k] := x; INC(k) END
+        IF NOT R.eof THEN buf[k] := x; INC(k) END
       UNTIL R.eof OR (k = PakSize);
       REPEAT Send(seqno, k, buf); ReceiveHead(T1)
       UNTIL head1.typ # seqno + ACK;
@@ -105,7 +140,7 @@ MODULE Net; (*NW 3.7.88 / 25.8.91 / PR 7.8.13 / 9.12.13*)
   PROCEDURE ReceiveData(F: Files.File; VAR done: BOOLEAN);
     VAR k, retry, seqno: INTEGER;
      x: BYTE;
-     len: LONGINT;
+     len: INTEGER;
      R: Files.Rider;
   BEGIN Files.Set(R, F, 0); seqno := 0; len := 0; retry := 2; k := PakSize;
     REPEAT
@@ -143,7 +178,7 @@ MODULE Net; (*NW 3.7.88 / 25.8.91 / PR 7.8.13 / 9.12.13*)
     VAR i: INTEGER;
       done: BOOLEAN; x: BYTE;
       F: Files.File;
-      pw, clock, newclock: LONGINT;
+      pw, clock, newclock: INTEGER;
       Id: ARRAY 8 OF CHAR;
       IdB: ARRAY 8 OF BYTE;
       FileName: ARRAY 32 OF CHAR;
@@ -163,7 +198,7 @@ Texts.WriteString(W, FileName);
         reply(0)
       ELSIF head1.typ = REC THEN
         PickS(Id); PickQ(pw); PickS(FileName);
-        IF ~protected THEN
+        IF NOT protected THEN
           Texts.WriteString(W, Id); Texts.Write(W, " ");
 Texts.WriteString(W, FileName);
           F := Files.New(FileName);
@@ -185,7 +220,7 @@ INC(i) END ;
         i := 0; AppendW(Oberon.Clock(), IdB, 4, i); Send(TIM, 4, IdB)
       ELSIF head1.typ = TIM THEN PickQ(newclock); PickS(Id); PickQ(pw);
         clock := Oberon.Clock();
-        IF ~protected & (Id[0] # 0X) & (ABS(pw - clock) > 10) THEN
+        IF NOT protected AND (Id[0] # 0X) AND (ABS(pw - clock) > 10) THEN
           Oberon.SetClock(newclock);
           Texts.WriteString(W, Id); Texts.WriteString(W, " changed
 System.Date");
@@ -209,10 +244,10 @@ System.Date");
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S)
   END GetPar1;
 
-  PROCEDURE GetPar(VAR S: Texts.Scanner; VAR end: LONGINT);
-    VAR T: Texts.Text; beg, tm: LONGINT;
+  PROCEDURE GetPar(VAR S: Texts.Scanner; VAR end: INTEGER);
+    VAR T: Texts.Text; beg, tm: INTEGER;
   BEGIN Texts.Scan(S);
-    IF (S.class = Texts.Char) & (S.c = "^") THEN
+    IF (S.class = Texts.Char) AND (S.c = "^") THEN
       Oberon.GetSelection(T, beg, end, tm);
       IF tm >= 0 THEN Texts.OpenScanner(S, T, beg); Texts.Scan(S) END
     ELSE end := Oberon.Par.text.len
@@ -221,7 +256,7 @@ System.Date");
 
   PROCEDURE SendFiles*;
     VAR k: INTEGER;
-      end: LONGINT;
+      end: INTEGER;
       S: Texts.Scanner;
       F: Files.File;
       buf: ARRAY 64 OF BYTE;
@@ -230,7 +265,7 @@ System.Date");
       FindPartner(S.s, k);
       IF k = 0 THEN
         GetPar(S, end);
-        WHILE (Texts.Pos(S) < end) & (S.class = Texts.Name) DO
+        WHILE (Texts.Pos(S) < end) AND (S.class = Texts.Name) DO
           Texts.WriteString(W, S.s); k := 0;
           AppendS(Oberon.User, buf, k); AppendW(Oberon.Password, buf, 4, k);
           AppendS(S.s, buf, k);
@@ -263,7 +298,7 @@ W.buf);
 
   PROCEDURE ReceiveFiles*;
     VAR k: INTEGER; done: BOOLEAN;
-      end: LONGINT;
+      end: INTEGER;
       S: Texts.Scanner;
       F: Files.File;
       buf: ARRAY 64 OF BYTE;
@@ -272,7 +307,7 @@ W.buf);
       FindPartner(S.s, k);
       IF k = 0 THEN
         GetPar(S, end);
-        WHILE (Texts.Pos(S) < end) & (S.class = Texts.Name) DO
+        WHILE (Texts.Pos(S) < end) AND (S.class = Texts.Name) DO
           Texts.WriteString(W, S.s);
           k := 0; AppendS(Oberon.User, buf, k); AppendW(Oberon.Password,
 buf, 4, k);
@@ -315,7 +350,7 @@ W.buf);
       FindPartner(S.s, i);
       IF i = 0 THEN
         Texts.Read(S, ch);
-        WHILE (ch >= " ") & (i < 64) DO
+        WHILE (ch >= " ") AND (i < 64) DO
           msg[i] := ORD(ch); INC(i); Texts.Read(S, ch)
         END ;
         Send(MSG, i, msg); ReceiveHead(T0);

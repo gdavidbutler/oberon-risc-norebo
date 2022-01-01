@@ -1,5 +1,45 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(* Project Norebo
+ * Copyright (C)2019 Peter De Wachter
+ *
+ * Released under the following notice:
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE VFileDir;   (*derived from NW 12.1.86 / 23.8.90 / 15.8.2013*)
-  IMPORT SYSTEM, VDisk;
+  IMPORT VDisk;
 
   (*File Directory is a B-tree with its root page at DirRootAdr.
     Each entry contains a file name and the disk address of the file's head sector*)
@@ -64,7 +104,7 @@ MODULE VFileDir;   (*derived from NW 12.1.86 / 23.8.90 / 15.8.2013*)
         i := (L+R) DIV 2;
         IF name <= a.e[i].name THEN R := i ELSE L := i+1 END
       END ;
-      IF (R < a.m) & (name = a.e[R].name) THEN A := a.e[R].adr (*found*)
+      IF (R < a.m) AND (name = a.e[R].name) THEN A := a.e[R].adr (*found*)
       ELSIF R = 0 THEN dadr := a.p0
       ELSE dadr := a.e[R-1].p
       END ;
@@ -84,13 +124,13 @@ MODULE VFileDir;   (*derived from NW 12.1.86 / 23.8.90 / 15.8.2013*)
       u: DirEntry;
       a: DirPage;
 
-  BEGIN (*~h*) VDisk.GetSector(V, dpg0, a); ASSERT(a.mark = DirMark);
+  BEGIN (*not h*) VDisk.GetSector(V, dpg0, a); ASSERT(a.mark = DirMark);
     L := 0; R := a.m; (*binary search*)
     WHILE L < R DO
       i := (L+R) DIV 2;
       IF name <= a.e[i].name THEN R := i ELSE L := i+1 END
     END ;
-    IF (R < a.m) & (name = a.e[R].name) THEN
+    IF (R < a.m) AND (name = a.e[R].name) THEN
       a.e[R].adr := fad; VDisk.PutSector(V, dpg0, a)  (*replace*)
     ELSE (*not on this page*)
       IF R = 0 THEN dpg1 := a.p0 ELSE dpg1 := a.e[R-1].p END ;
@@ -156,7 +196,7 @@ MODULE VFileDir;   (*derived from NW 12.1.86 / 23.8.90 / 15.8.2013*)
         dpg1: DiskAdr;
         a, b: DirPage;  (*a := underflowing page, b := neighbouring page*)
   BEGIN VDisk.GetSector(V, dpg0, a); ASSERT(a.mark = DirMark);
-    (*h & a.m = N-1 & dpg0 = c.e[s-1].p*)
+    (*h and a.m = N-1 and dpg0 = c.e[s-1].p*)
     IF s < c.m THEN (*b := page to the right of a*)
       dpg1 := c.e[s].p; VDisk.GetSector(V, dpg1, b); ASSERT(b.mark = DirMark);
       k := (b.m-N+1) DIV 2; (*k = no. of items available on page b*)
@@ -221,14 +261,14 @@ MODULE VFileDir;   (*derived from NW 12.1.86 / 23.8.90 / 15.8.2013*)
       END
     END del;
 
-  BEGIN (*~h*) VDisk.GetSector(V, dpg0, a); ASSERT(a.mark = DirMark);
+  BEGIN (*not h*) VDisk.GetSector(V, dpg0, a); ASSERT(a.mark = DirMark);
     L := 0; R := a.m; (*binary search*)
     WHILE L < R DO
       i := (L+R) DIV 2;
       IF name <= a.e[i].name THEN R := i ELSE L := i+1 END
     END ;
     IF R = 0 THEN dpg1 := a.p0 ELSE dpg1 := a.e[R-1].p END ;
-    IF (R < a.m) & (name = a.e[R].name) THEN
+    IF (R < a.m) AND (name = a.e[R].name) THEN
       (*found, now delete*) fad := a.e[R].adr;
       IF dpg1 = 0 THEN  (*a is a leaf page*)
         DEC(a.m); h := a.m < N; i := R;
@@ -251,7 +291,7 @@ MODULE VFileDir;   (*derived from NW 12.1.86 / 23.8.90 / 15.8.2013*)
     delete(V, name, DirRootAdr, h, fad);
     IF h THEN (*root underflow*)
       VDisk.GetSector(V, DirRootAdr, a); ASSERT(a.mark = DirMark);
-      IF (a.m = 0) & (a.p0 # 0) THEN
+      IF (a.m = 0) AND (a.p0 # 0) THEN
         newroot := a.p0; VDisk.GetSector(V, newroot, a); ASSERT(a.mark = DirMark);
         VDisk.PutSector(V, DirRootAdr, a) (*discard newroot*)
       END
@@ -266,7 +306,7 @@ MODULE VFileDir;   (*derived from NW 12.1.86 / 23.8.90 / 15.8.2013*)
     VAR i, j: INTEGER; pfx, nmx: CHAR;
       dpg1: DiskAdr; a: DirPage;
   BEGIN VDisk.GetSector(V, dpg, a); ASSERT(a.mark = DirMark); i := 0;
-    WHILE (i < a.m) & continue DO
+    WHILE (i < a.m) AND continue DO
       j := 0;
       REPEAT pfx := prefix[j]; nmx := a.e[i].name[j]; INC(j)
       UNTIL (nmx # pfx) OR (pfx = 0X);
@@ -280,7 +320,7 @@ MODULE VFileDir;   (*derived from NW 12.1.86 / 23.8.90 / 15.8.2013*)
       END ;
       INC(i)
     END ;
-    IF continue & (i > 0) & (a.e[i-1].p # 0) THEN
+    IF continue AND (i > 0) AND (a.e[i-1].p # 0) THEN
       enumerate(V, prefix, a.e[i-1].p, proc, continue)
     END
   END enumerate;
@@ -305,8 +345,8 @@ PROCEDURE Init*(V: VDisk.VDisk);
         VAR i, j: INTEGER; x: DiskAdr;
       BEGIN j := L; x := A[j];
         REPEAT i := j; j := 2*j + 1;
-          IF (j+1 < R) & (A[j] < A[j+1]) THEN INC(j) END ;
-          IF (j < R) & (x <= A[j]) THEN A[i] := A[j] END
+          IF (j+1 < R) AND (A[j] < A[j+1]) THEN INC(j) END ;
+          IF (j < R) AND (x <= A[j]) THEN A[i] := A[j] END
         UNTIL (j >= R) OR (x > A[j]);
         A[i] := x
       END sift;

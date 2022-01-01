@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10.1.2019*)
   IMPORT Files, Fonts;
 
@@ -19,21 +54,21 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
   TYPE Piece = POINTER TO PieceDesc;
     PieceDesc = RECORD
       f: Files.File;
-      off, len: LONGINT;
+      off, len: INTEGER;
       fnt: Fonts.Font;
       col, voff: INTEGER;
       prev, next: Piece
     END;
 
     Text* = POINTER TO TextDesc;
-    Notifier* = PROCEDURE (T: Text; op: INTEGER; beg, end: LONGINT);
+    Notifier* = PROCEDURE (T: Text; op: INTEGER; beg, end: INTEGER);
     TextDesc* = RECORD
-      len*: LONGINT;
+      len*: INTEGER;
       changed*: BOOLEAN;
       notify*: Notifier;
       trailer: Piece;
       pce: Piece;  (*cache*)
-      org: LONGINT (*cache*)
+      org: INTEGER (*cache*)
     END;
 
     Reader* = RECORD
@@ -41,17 +76,17 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
       fnt*: Fonts.Font;
       col*, voff*: INTEGER;
       ref: Piece;
-      org: LONGINT;
-      off: LONGINT;
+      org: INTEGER;
+      off: INTEGER;
       rider: Files.Rider
     END;
 
     Scanner* = RECORD (Reader)
       nextCh*: CHAR;
       line*, class*: INTEGER;
-      i*: LONGINT;
+      i*: INTEGER;
       x*: REAL;
-      y*: LONGREAL;
+      y*: REAL;
       c*: CHAR;
       len*: INTEGER;
       s*: ARRAY 32 OF CHAR
@@ -59,7 +94,7 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
 
     Buffer* = POINTER TO BufDesc;
     BufDesc* = RECORD
-      len*: LONGINT;
+      len*: INTEGER;
       header, last: Piece
     END;
 
@@ -68,7 +103,7 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
       fnt*: Fonts.Font;
       col*, voff*: INTEGER;
       rider: Files.Rider
-    END;     
+    END;
 
   VAR TrailerFile: Files.File;
 
@@ -82,7 +117,7 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
 
   PROCEDURE Load* (VAR R: Files.Rider; T: Text);
     VAR Q, q, p: Piece;
-      off: LONGINT;
+      off: INTEGER;
       N, fno: INTEGER; bt: BYTE;
       f: Files.File;
       FName: ARRAY 32 OF CHAR;
@@ -108,10 +143,10 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
 
   PROCEDURE Open* (T: Text; name: ARRAY OF CHAR);
     VAR f: Files.File; R: Files.Rider; Q, q: Piece;
-      tag: CHAR; len: LONGINT;
+      tag: CHAR; len: INTEGER;
   BEGIN f := Files.Old(name);
     IF f # NIL THEN
-      Files.Set(R, f, 0); Files.Read(R, tag); 
+      Files.Set(R, f, 0); Files.Read(R, tag);
       IF tag = TextTag THEN Load(R, T)
       ELSE (*Ascii file*)
         len := Files.Length(f); Q := Trailer();
@@ -127,7 +162,7 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
   PROCEDURE Store* (VAR W: Files.Rider; T: Text);
     VAR p, q: Piece;
       R: Files.Rider;
-      off, rlen, pos: LONGINT;
+      off, rlen, pos: INTEGER;
       N, n: INTEGER;
       ch: CHAR;
       Dict: ARRAY 32, 32 OF CHAR;
@@ -135,7 +170,7 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     N := 1; p := T.trailer.next;
     WHILE p # T.trailer DO
       rlen := p.len; q := p.next;
-      WHILE (q # T.trailer) & (q.fnt = p.fnt) & (q.col = p.col) & (q.voff = p.voff) DO
+      WHILE (q # T.trailer) AND (q.fnt = p.fnt) AND (q.col = p.col) AND (q.voff = p.voff) DO
         rlen := rlen + q.len; q := q.next
       END;
       Dict[N] := p.fnt.name;
@@ -171,8 +206,8 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     B.last := B.header; B.len := 0
   END OpenBuf;
 
-  PROCEDURE FindPiece (T: Text; pos: LONGINT; VAR org: LONGINT; VAR pce: Piece);
-    VAR p: Piece; porg: LONGINT;
+  PROCEDURE FindPiece (T: Text; pos: INTEGER; VAR org: INTEGER; VAR pce: Piece);
+    VAR p: Piece; porg: INTEGER;
   BEGIN p := T.pce; porg := T.org;
     IF pos >= porg THEN
       WHILE pos >= porg + p.len DO INC(porg, p.len); p := p.next END
@@ -183,7 +218,7 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     pce := p; org := porg
   END FindPiece;
 
-  PROCEDURE SplitPiece (p: Piece; off: LONGINT; VAR pr: Piece);
+  PROCEDURE SplitPiece (p: Piece; off: INTEGER; VAR pr: Piece);
     VAR q: Piece;
   BEGIN
     IF off > 0 THEN NEW(q);
@@ -198,8 +233,8 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     END
   END SplitPiece;
 
-  PROCEDURE Save* (T: Text; beg, end: LONGINT; B: Buffer);
-    VAR p, q, qb, qe: Piece; org: LONGINT;
+  PROCEDURE Save* (T: Text; beg, end: INTEGER; B: Buffer);
+    VAR p, q, qb, qe: Piece; org: INTEGER;
   BEGIN
     IF end > T.len THEN end := T.len END;
     FindPiece(T, beg, org, p);
@@ -207,7 +242,7 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     qb.len := qb.len - (beg - org);
     qb.off := qb.off + (beg - org);
     qe := qb;
-    WHILE end > org + p.len DO 
+    WHILE end > org + p.len DO
       org := org + p.len; p := p.next;
       NEW(q); q^ := p^; qe.next := q; q.prev := qe; qe := q
     END;
@@ -225,14 +260,14 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     DB.last := Q; DB.len := DB.len + SB.len
   END Copy;
 
-  PROCEDURE Insert* (T: Text; pos: LONGINT; B: Buffer);
-    VAR pl, pr, p, qb, qe: Piece; org, end: LONGINT;
+  PROCEDURE Insert* (T: Text; pos: INTEGER; B: Buffer);
+    VAR pl, pr, p, qb, qe: Piece; org, end: INTEGER;
   BEGIN
     FindPiece(T, pos, org, p); SplitPiece(p, pos - org, pr);
     IF T.org >= org THEN T.org := org - p.prev.len; T.pce := p.prev END ;
     pl := pr.prev; qb := B.header.next;
-    IF (qb # NIL) & (qb.f = pl.f) & (qb.off = pl.off + pl.len)
-        & (qb.fnt = pl.fnt) & (qb.col = pl.col) & (qb.voff = pl.voff) THEN
+    IF (qb # NIL) AND (qb.f = pl.f) AND (qb.off = pl.off + pl.len)
+        AND (qb.fnt = pl.fnt) AND (qb.col = pl.col) AND (qb.voff = pl.voff) THEN
       pl.len := pl.len + qb.len; qb := qb.next
     END;
     IF qb # NIL THEN qe := B.last;
@@ -248,8 +283,8 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
   BEGIN Insert(T, T.len, B)
   END Append;
 
-  PROCEDURE Delete* (T: Text; beg, end: LONGINT; B: Buffer);
-    VAR pb, pe, pbr, per: Piece; orgb, orge: LONGINT;
+  PROCEDURE Delete* (T: Text; beg, end: INTEGER; B: Buffer);
+    VAR pb, pe, pbr, per: Piece; orgb, orge: INTEGER;
   BEGIN
     IF end > T.len THEN end := T.len END;
     FindPiece(T, beg, orgb, pb); SplitPiece(pb, beg - orgb, pbr);
@@ -266,8 +301,8 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     IF T.notify # NIL THEN T.notify(T, delete, beg, end) END
   END Delete;
 
-  PROCEDURE ChangeLooks* (T: Text; beg, end: LONGINT; sel: SET; fnt: Fonts.Font; col, voff: INTEGER);
-    VAR pb, pe, p: Piece; org: LONGINT;
+  PROCEDURE ChangeLooks* (T: Text; beg, end: INTEGER; sel: SET; fnt: Fonts.Font; col, voff: INTEGER);
+    VAR pb, pe, p: Piece; org: INTEGER;
   BEGIN
     IF end > T.len THEN end := T.len END;
     FindPiece(T, beg, org, p); SplitPiece(p, beg - org, pb);
@@ -283,15 +318,15 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     IF T.notify # NIL THEN T.notify(T, replace, beg, end) END
   END ChangeLooks;
 
-  PROCEDURE Attributes*(T: Text; pos: LONGINT; VAR fnt: Fonts.Font; VAR col, voff: INTEGER);
-    VAR p: Piece; org: LONGINT;
+  PROCEDURE Attributes*(T: Text; pos: INTEGER; VAR fnt: Fonts.Font; VAR col, voff: INTEGER);
+    VAR p: Piece; org: INTEGER;
   BEGIN FindPiece(T, pos, org, p); fnt := p.fnt; col := p.col; voff := p.voff
   END Attributes;
 
   (* ------------------ Access: Readers ------------------------- *)
 
-  PROCEDURE OpenReader* (VAR R: Reader; T: Text; pos: LONGINT);
-    VAR p: Piece; org: LONGINT;
+  PROCEDURE OpenReader* (VAR R: Reader; T: Text; pos: INTEGER);
+    VAR p: Piece; org: INTEGER;
   BEGIN FindPiece(T, pos, org, p);
     R.ref := p; R.org := org; R.off := pos - org;
     Files.Set(R.rider, p.f, p.off + R.off); R.eot := FALSE
@@ -308,13 +343,13 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     END
   END Read;
 
-  PROCEDURE Pos* (VAR R: Reader): LONGINT;
+  PROCEDURE Pos* (VAR R: Reader): INTEGER;
   BEGIN RETURN R.org + R.off
-  END Pos;  
+  END Pos;
 
   (* ------------------ Access: Scanners (NW) ------------------------- *)
 
-  PROCEDURE OpenScanner* (VAR S: Scanner; T: Text; pos: LONGINT);
+  PROCEDURE OpenScanner* (VAR S: Scanner; T: Text; pos: INTEGER);
   BEGIN OpenReader(S, T, pos); S.line := 0; S.nextCh := " "
   END OpenScanner;
 
@@ -343,26 +378,26 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
       IF ch = CR THEN INC(S.line) END ;
       Read(S, ch)
     END ;
-    IF ("A" <= ch) & (ch <= "Z") OR ("a" <= ch) & (ch <= "z") THEN (*name*)
+    IF ("A" <= ch) AND (ch <= "Z") OR ("a" <= ch) AND (ch <= "z") THEN (*name*)
       REPEAT S.s[i] := ch; INC(i); Read(S, ch)
-      UNTIL ((ch < "0") & (ch # ".") OR ("9" < ch) & (ch < "A") OR ("Z" < ch) & (ch < "a") OR ("z" < ch)) OR (i = 31);
+      UNTIL ((ch < "0") AND (ch # ".") OR ("9" < ch) AND (ch < "A") OR ("Z" < ch) AND (ch < "a") OR ("z" < ch)) OR (i = 31);
       S.s[i] := 0X; S.len := i; S.class := Name
     ELSIF ch = 22X THEN (*string*)
       Read(S, ch);
-      WHILE (ch # 22X) & (ch >= " ") & (i # 31) DO S.s[i] := ch; INC(i); Read(S, ch) END;
+      WHILE (ch # 22X) AND (ch >= " ") AND (i # 31) DO S.s[i] := ch; INC(i); Read(S, ch) END;
       S.s[i] := 0X; S.len := i+1; Read(S, ch); S.class := String
     ELSE hex := FALSE;
       IF ch = "-" THEN neg := TRUE; Read(S, ch) ELSE neg := FALSE END ;
-      IF ("0" <= ch) & (ch <= "9") THEN (*number*)
+      IF ("0" <= ch) AND (ch <= "9") THEN (*number*)
         n := ORD(ch) - 30H; h := n; Read(S, ch);
-        WHILE ("0" <= ch) & (ch <= "9") OR ("A" <= ch) & (ch <= "F") DO
+        WHILE ("0" <= ch) AND (ch <= "9") OR ("A" <= ch) AND (ch <= "F") DO
           IF ch <= "9" THEN d := ORD(ch) - 30H ELSE d := ORD(ch) - 37H; hex := TRUE END ;
           n := 10*n + d; h := 10H*h + d; Read(S, ch)
         END ;
         IF ch = "H" THEN (*hex integer*) Read(S, ch); S.i := h; S.class := Int  (*neg?*)
         ELSIF ch = "." THEN (*real number*)
           Read(S, ch); x := 0.0; e := 0; j := 0;
-          WHILE ("0" <= ch) & (ch <= "9") DO  (*fraction*)
+          WHILE ("0" <= ch) AND (ch <= "9") DO  (*fraction*)
             h := 10*n + (ORD(ch) - 30H);
             IF h < maxM THEN n := h; INC(j) END ;
             Read(S, ch)
@@ -373,7 +408,7 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
             ELSE negE := FALSE;
               IF ch = "+" THEN Read(S, ch) END
             END ;
-            WHILE ("0" <= ch) & (ch <= "9") DO
+            WHILE ("0" <= ch) AND (ch <= "9") DO
               s := s*10 + ORD(ch) - 30H; Read(S, ch)
             END ;
             IF negE THEN DEC(e, s) ELSE INC(e, s) END ;
@@ -440,8 +475,8 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     WHILE s[i] >= " " DO Write(W, s[i]); INC(i) END
   END WriteString;
 
-  PROCEDURE WriteInt* (VAR W: Writer; x, n: LONGINT);
-    VAR i: INTEGER; x0: LONGINT;
+  PROCEDURE WriteInt* (VAR W: Writer; x, n: INTEGER);
+    VAR i: INTEGER; x0: INTEGER;
       a: ARRAY 10 OF CHAR;
   BEGIN
     IF ROR(x, 31) = 1 THEN WriteString(W, " -2147483648")
@@ -456,8 +491,8 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     END
   END WriteInt;
 
-  PROCEDURE WriteHex* (VAR W: Writer; x: LONGINT);
-    VAR i: INTEGER; y: LONGINT;
+  PROCEDURE WriteHex* (VAR W: Writer; x: INTEGER);
+    VAR i: INTEGER; y: INTEGER;
       a: ARRAY 10 OF CHAR;
   BEGIN i := 0; Write(W, " ");
     REPEAT y := x MOD 10H;
@@ -518,12 +553,12 @@ MODULE Texts; (*JG 21.11.90 / NW 11.7.90 / 24.12.95 / 22.11.10 / 18.11.2014 / 10
     END
   END WriteRealFix;
 
-  PROCEDURE WritePair(VAR W: Writer; ch: CHAR; x: LONGINT);
+  PROCEDURE WritePair(VAR W: Writer; ch: CHAR; x: INTEGER);
   BEGIN Write(W, ch);
     Write(W, CHR(x DIV 10 + 30H)); Write(W, CHR(x MOD 10 + 30H))
   END WritePair;
 
-  PROCEDURE WriteClock* (VAR W: Writer; d: LONGINT);
+  PROCEDURE WriteClock* (VAR W: Writer; d: INTEGER);
   BEGIN
     WritePair(W, " ", d DIV 20000H MOD 20H);   (*day*)
     WritePair(W, ".", d DIV 400000H MOD 10H); (*month*)

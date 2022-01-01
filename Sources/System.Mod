@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
   IMPORT SYSTEM, Kernel, FileDir, Files, Modules,
     Input, Display, Viewers, Fonts, Texts, Oberon, MenuViewers, TextFrames;
@@ -10,9 +45,9 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
     pat: ARRAY 32 OF CHAR;
 
   PROCEDURE GetArg(VAR S: Texts.Scanner);
-    VAR T: Texts.Text; beg, end, time: LONGINT;
+    VAR T: Texts.Text; beg, end, time: INTEGER;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
-    IF (S.class = Texts.Char) & (S.c = "^") THEN
+    IF (S.class = Texts.Char) AND (S.c = "^") THEN
       Oberon.GetSelection(T, beg, end, time);
       IF time >= 0 THEN Texts.OpenScanner(S, T, beg); Texts.Scan(S) END
     END
@@ -29,9 +64,9 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
       user: ARRAY 8 OF CHAR;
       password: ARRAY 16 OF CHAR;
   BEGIN i := 0; Input.Read(ch);
-    WHILE (ch # "/") & (i < 7) DO user[i] := ch; INC(i); Input.Read(ch) END;
+    WHILE (ch # "/") AND (i < 7) DO user[i] := ch; INC(i); Input.Read(ch) END;
     user[i] := 0X; i := 0; Input.Read(ch);
-    WHILE (ch > " ") & (i < 15) DO password[i] := ch; INC(i); Input.Read(ch) END;
+    WHILE (ch > " ") AND (i < 15) DO password[i] := ch; INC(i); Input.Read(ch) END;
     password[i] := 0X; Oberon.SetUser(user, password)
   END SetUser;
 
@@ -52,10 +87,10 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
   BEGIN GetArg(S);
     IF S.class = Texts.Int THEN Oberon.SetOffset(S.i) END
   END SetOffset;
-  
+
   PROCEDURE Date*;
     VAR S: Texts.Scanner;
-      dt, hr, min, sec, yr, mo, day: LONGINT;
+      dt, hr, min, sec, yr, mo, day: INTEGER;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
     IF S.class = Texts.Int THEN (*set clock*)
       day := S.i; Texts.Scan(S); mo := S.i; Texts.Scan(S); yr := S.i; Texts.Scan(S);
@@ -89,7 +124,7 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
   PROCEDURE Clear*;  (*clear Log*)
     VAR T: Texts.Text; F: Display.Frame; buf: Texts.Buffer;
   BEGIN F := Oberon.Par.frame;
-    IF (F # NIL) & (F.next IS TextFrames.Frame) & (F = Oberon.Par.vwr.dsc) THEN
+    IF (F # NIL) AND (F.next IS TextFrames.Frame) AND (F = Oberon.Par.vwr.dsc) THEN
       NEW(buf); Texts.OpenBuf(buf); T := F.next(TextFrames.Frame).text; Texts.Delete(T, 0, T.len, buf)
     END
   END Clear;
@@ -111,7 +146,7 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
   PROCEDURE Recall*;
     VAR V: Viewers.Viewer; M: Viewers.ViewerMsg;
   BEGIN Viewers.Recall(V);
-    IF (V#NIL) & (V.state = 0) THEN
+    IF (V#NIL) AND (V.state = 0) THEN
       Viewers.Open(V, V.X, V.Y + V.H); M.id := Viewers.restore; V.handle(V, M)
     END
   END Recall;
@@ -149,11 +184,11 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
 
   PROCEDURE Free*;
     VAR T: Texts.Text;
-      beg, end, time: LONGINT;
+      beg, end, time: INTEGER;
       S: Texts.Scanner;
   BEGIN Texts.WriteString(W, "System.Free"); EndLine;
     Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
-    IF (S.class = Texts.Char) & (S.c = "^") THEN
+    IF (S.class = Texts.Char) AND (S.c = "^") THEN
       Oberon.GetSelection(T, beg, end, time);
       IF time >= 0 THEN Texts.OpenScanner(S, T, beg); Texts.Scan(S);
         IF S.class = Texts.Name THEN Free1(S) END
@@ -170,17 +205,17 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
 
   (* ------------- Toolbox of file system ---------------*)
 
-  PROCEDURE List(name: FileDir.FileName; adr: LONGINT; VAR cont: BOOLEAN);
+  PROCEDURE List(name: FileDir.FileName; adr: INTEGER; VAR cont: BOOLEAN);
     VAR i0, i, j0, j: INTEGER; hp: FileDir.FileHeader;
   BEGIN
     i := 0;
-    WHILE (pat[i] > "*") & (pat[i] = name[i]) DO INC(i) END ;
-    IF (pat[i] = 0X) & (name[i] = 0X) THEN i0 := i; j0 := i
+    WHILE (pat[i] > "*") AND (pat[i] = name[i]) DO INC(i) END ;
+    IF (pat[i] = 0X) AND (name[i] = 0X) THEN i0 := i; j0 := i
     ELSIF pat[i] = "*" THEN
       i0 := i; j0 := i+1;
       WHILE name[i0] # 0X DO
         i := i0; j := j0;
-        WHILE (name[i] # 0X) & (name[i] = pat[j]) DO INC(i); INC(j) END ;
+        WHILE (name[i] # 0X) AND (name[i] = pat[j]) DO INC(i); INC(j) END ;
         IF pat[j] = 0X THEN
           IF name[i] = 0X THEN (*match*) j0 := j ELSE INC(i0) END
         ELSIF pat[j] = "*" THEN i0 := i; j0 := j+1
@@ -188,7 +223,7 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
         END
       END
     END ;
-    IF (name[i0] = 0X) & (pat[j0] = 0X) THEN (*found*)
+    IF (name[i0] = 0X) AND (pat[j0] = 0X) THEN (*found*)
       Texts.WriteString(W, name);
       IF pat[j0+1] = "!" THEN (*option*)
         Kernel.GetSector(adr, hp);
@@ -205,7 +240,7 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
       R: Texts.Reader;
       T, t: Texts.Text;
       V: Viewers.Viewer;
-      beg, end, time: LONGINT;
+      beg, end, time: INTEGER;
       pre: ARRAY 32 OF CHAR;
   BEGIN Texts.OpenReader(R, Oberon.Par.text, Oberon.Par.pos); Texts.Read(R, ch);
     WHILE ch = " " DO Texts.Read(R, ch) END;
@@ -238,15 +273,15 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
     Texts.WriteString(W, "System.CopyFiles"); EndLine;
     WHILE S.class = Texts.Name DO
       name := S.s; Texts.Scan(S);
-      IF (S.class = Texts.Char) & (S.c = "=") THEN Texts.Scan(S);
-        IF (S.class = Texts.Char) & (S.c = ">") THEN Texts.Scan(S);
+      IF (S.class = Texts.Char) AND (S.c = "=") THEN Texts.Scan(S);
+        IF (S.class = Texts.Char) AND (S.c = ">") THEN Texts.Scan(S);
           IF S.class = Texts.Name THEN
             Texts.WriteString(W, name); Texts.WriteString(W, " => "); Texts.WriteString(W, S.s);
             Texts.WriteString(W, " copying"); Texts.Append(Oberon.Log, W.buf);
             f := Files.Old(name);
             IF f # NIL THEN g := Files.New(S.s);
               Files.Set(Rf, f, 0); Files.Set(Rg, g, 0); Files.Read(Rf, ch);
-              WHILE ~Rf.eof DO Files.Write(Rg, ch); Files.Read(Rf, ch) END;
+              WHILE NOT Rf.eof DO Files.Write(Rg, ch); Files.Read(Rf, ch) END;
               Files.Register(g)
             ELSE Texts.WriteString(W, " failed")
             END ;
@@ -266,8 +301,8 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
     Texts.WriteString(W, "System.RenameFiles"); EndLine;
     WHILE S.class = Texts.Name DO
       name := S.s; Texts.Scan(S);
-      IF (S.class = Texts.Char) & (S.c = "=") THEN Texts.Scan(S);
-        IF (S.class = Texts.Char) & (S.c = ">") THEN Texts.Scan(S);
+      IF (S.class = Texts.Char) AND (S.c = "=") THEN Texts.Scan(S);
+        IF (S.class = Texts.Char) AND (S.c = ">") THEN Texts.Scan(S);
           IF S.class = Texts.Name THEN
             Texts.WriteString(W, name); Texts.WriteString(W, " => "); Texts.WriteString(W, S.s);
             Texts.WriteString(W, " renaming"); Files.Rename(name, S.s, res);
@@ -328,7 +363,7 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
 
   PROCEDURE ShowCommands*;
     VAR M: Modules.Module;
-      comadr: LONGINT; ch: CHAR;
+      comadr: INTEGER; ch: CHAR;
       T: Texts.Text;
       S: Texts.Scanner;
       V: Viewers.Viewer;
@@ -365,7 +400,7 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
   PROCEDURE OpenViewers;
     VAR logV, toolV: Viewers.Viewer;
       menu, main: Display.Frame;
-      d: LONGINT; X, Y: INTEGER;
+      d: INTEGER; X, Y: INTEGER;
   BEGIN d := Kernel.Clock(); Texts.WriteString(W, "Oberon V5  NW 14.4.2013"); EndLine;
     Oberon.AllocateSystemViewer(0, X, Y);
     menu := TextFrames.NewMenu("System.Log", LogMenu);
@@ -399,7 +434,7 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
     IF w = 0 THEN Kernel.New(a, b)
     ELSE (*trap*) Texts.WriteLn(W); Texts.WriteString(W, "  pos "); Texts.WriteInt(W, v DIV 100H MOD 10000H, 4);
       Texts.WriteString(W, "  TRAP"); Texts.WriteInt(W, w, 4); mod := Modules.root;
-      WHILE (mod # NIL) & ((u < mod.code) OR (u >= mod.imp)) DO mod := mod.next END ;
+      WHILE (mod # NIL) AND ((u < mod.code) OR (u >= mod.imp)) DO mod := mod.next END ;
       IF mod # NIL THEN Texts.WriteString(W, " in "); Texts.WriteString(W, mod.name) END ;
       Texts.WriteString(W, " at"); Texts.WriteHex(W, u);
       Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf); Oberon.Reset
@@ -411,7 +446,7 @@ MODULE System; (*JG 3.10.90 / NW 12.10.93 / NW 20.6.2016*)
   BEGIN n := SYSTEM.REG(15); Texts.WriteString(W, "  ABORT  "); Texts.WriteHex(W, n);
     Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf); Oberon.Reset
   END Abort;
-  
+
 BEGIN Texts.OpenWriter(W);
   Oberon.OpenLog(TextFrames.Text("")); OpenViewers;
   Kernel.Install(SYSTEM.ADR(Trap), 20H); Kernel.Install(SYSTEM.ADR(Abort), 0);

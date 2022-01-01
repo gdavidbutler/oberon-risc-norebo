@@ -1,3 +1,43 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(* Project Norebo
+ * Copyright (C)2019 Peter De Wachter
+ *
+ * Released under the following notice:
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Kernel;  (*derived from NW/PR  11.4.86 / 27.12.95 / 4.2.2014*)
   IMPORT SYSTEM, Norebo;
   CONST timer = -64;
@@ -10,11 +50,11 @@ MODULE Kernel;  (*derived from NW/PR  11.4.86 / 27.12.95 / 4.2.2014*)
 
 (* ---------- New: heap allocation ----------*)
 
-  PROCEDURE GetBlock(VAR p: LONGINT; len: LONGINT);
+  PROCEDURE GetBlock(VAR p: INTEGER; len: INTEGER);
     (*len is multiple of 256*)
-    VAR q0, q1, q2, size: LONGINT; done: BOOLEAN;
+    VAR q0, q1, q2, size: INTEGER; done: BOOLEAN;
   BEGIN q0 := 0; q1 := list0; done := FALSE;
-    WHILE ~done & (q1 # 0) DO
+    WHILE NOT done AND (q1 # 0) DO
       SYSTEM.GET(q1, size); SYSTEM.GET(q1+8, q2);
       IF size < len THEN (*no fit*) q0 := q1; q1 := q2
       ELSIF size = len THEN (*extract -> p*)
@@ -26,11 +66,11 @@ MODULE Kernel;  (*derived from NW/PR  11.4.86 / 27.12.95 / 4.2.2014*)
         IF q0 # 0 THEN SYSTEM.PUT(q0+8, q1) ELSE list0 := q1 END
       END
     END ;
-    IF ~done THEN p := 0 END
+    IF NOT done THEN p := 0 END
   END GetBlock;
 
-  PROCEDURE GetBlock128(VAR p: LONGINT);
-    VAR q: LONGINT;
+  PROCEDURE GetBlock128(VAR p: INTEGER);
+    VAR q: INTEGER;
   BEGIN
     IF list1 # 0 THEN p := list1; SYSTEM.GET(list1+8, list1)
     ELSE GetBlock(q, 256); SYSTEM.PUT(q+128, 128); SYSTEM.PUT(q+132, -1); SYSTEM.PUT(q+136, list1);
@@ -38,8 +78,8 @@ MODULE Kernel;  (*derived from NW/PR  11.4.86 / 27.12.95 / 4.2.2014*)
     END
   END GetBlock128;
 
-  PROCEDURE GetBlock64(VAR p: LONGINT);
-    VAR q: LONGINT;
+  PROCEDURE GetBlock64(VAR p: INTEGER);
+    VAR q: INTEGER;
   BEGIN
     IF list2 # 0 THEN p := list2; SYSTEM.GET(list2+8, list2)
     ELSE GetBlock128(q); SYSTEM.PUT(q+64, 64); SYSTEM.PUT(q+68, -1); SYSTEM.PUT(q+72, list2);
@@ -47,8 +87,8 @@ MODULE Kernel;  (*derived from NW/PR  11.4.86 / 27.12.95 / 4.2.2014*)
     END
   END GetBlock64;
 
-  PROCEDURE GetBlock32(VAR p: LONGINT);
-    VAR q: LONGINT;
+  PROCEDURE GetBlock32(VAR p: INTEGER);
+    VAR q: INTEGER;
   BEGIN
     IF list3 # 0 THEN p := list3; SYSTEM.GET(list3+8, list3)
     ELSE GetBlock64(q); SYSTEM.PUT(q+32, 32); SYSTEM.PUT(q+36, -1); SYSTEM.PUT(q+40, list3);
@@ -56,9 +96,9 @@ MODULE Kernel;  (*derived from NW/PR  11.4.86 / 27.12.95 / 4.2.2014*)
     END
   END GetBlock32;
 
-   PROCEDURE New*(VAR ptr: LONGINT; tag: LONGINT);
+   PROCEDURE New*(VAR ptr: INTEGER; tag: INTEGER);
     (*called by NEW via MT[0]; ptr and tag are pointers*)
-    VAR p, size, lim: LONGINT;
+    VAR p, size, lim: INTEGER;
   BEGIN SYSTEM.GET(tag, size);
     IF size = 32 THEN GetBlock32(p)
     ELSIF size = 64 THEN GetBlock64(p)
@@ -73,29 +113,29 @@ MODULE Kernel;  (*derived from NW/PR  11.4.86 / 27.12.95 / 4.2.2014*)
 
 (* ---------- Garbage collector ----------*)
 
-  PROCEDURE Mark*(pref: LONGINT);
-    VAR pvadr, offadr, offset, tag, p, q, r: LONGINT;
+  PROCEDURE Mark*(pref: INTEGER);
+    VAR pvadr, offadr, offset, tag, p, q, r: INTEGER;
   BEGIN SYSTEM.GET(pref, pvadr); (*pointers < heapOrg considered NIL*)
     WHILE pvadr # 0 DO
       SYSTEM.GET(pvadr, p); SYSTEM.GET(p-4, offadr);
-      IF (p >= heapOrg) & (offadr = 0) THEN q := p;   (*mark elements in data structure with root p*)
+      IF (p >= heapOrg) AND (offadr = 0) THEN q := p;   (*mark elements in data structure with root p*)
         REPEAT SYSTEM.GET(p-4, offadr);
           IF offadr = 0 THEN SYSTEM.GET(p-8, tag); offadr := tag + 16 ELSE INC(offadr, 4) END ;
           SYSTEM.PUT(p-4, offadr); SYSTEM.GET(offadr, offset);
           IF offset # -1 THEN (*down*)
             SYSTEM.GET(p+offset, r); SYSTEM.GET(r-4, offadr);
-            IF (r >= heapOrg) & (offadr = 0) THEN SYSTEM.PUT(p+offset, q); q := p; p := r END
+            IF (r >= heapOrg) AND (offadr = 0) THEN SYSTEM.PUT(p+offset, q); q := p; p := r END
           ELSE (*up*) SYSTEM.GET(q-4, offadr); SYSTEM.GET(offadr, offset);
             IF p # q THEN SYSTEM.GET(q+offset, r); SYSTEM.PUT(q+offset, p); p := q; q := r END
           END
-        UNTIL (p = q) & (offset = -1)
+        UNTIL (p = q) AND (offset = -1)
       END ;
       INC(pref, 4); SYSTEM.GET(pref, pvadr)
     END
   END Mark;
 
   PROCEDURE Scan*;
-    VAR p, q, mark, tag, size: LONGINT;
+    VAR p, q, mark, tag, size: INTEGER;
   BEGIN p := heapOrg;
     REPEAT SYSTEM.GET(p+4, mark); q := p;
       WHILE mark = 0 DO

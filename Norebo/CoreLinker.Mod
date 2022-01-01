@@ -1,3 +1,43 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(* Project Norebo
+ * Copyright (C)2019 Peter De Wachter
+ *
+ * Released under the following notice:
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE CoreLinker;  (*derived from NW 20.10.2013*)
   IMPORT SYSTEM, Files, Texts, Oberon;
   CONST versionkey = 1X; MT = 12; MTOrg = 20H; DescSize = 80;
@@ -40,11 +80,11 @@ MODULE CoreLinker;  (*derived from NW 20.10.2013*)
   PROCEDURE Check(s: ARRAY OF CHAR);
     VAR i: INTEGER; ch: CHAR;
   BEGIN ch := s[0]; res := 1; i := 1;
-    IF (ch >= "A") & (ch <= "Z") OR (ch >= "a") & (ch <= "z") THEN
+    IF (ch >= "A") AND (ch <= "Z") OR (ch >= "a") AND (ch <= "z") THEN
       REPEAT ch := s[i]; INC(i)
-      UNTIL ~((ch >= "0") & (ch <= "9") OR (ch >= "A") & (ch <= "Z")
-        OR (ch >= "a") & (ch <= "z") OR (ch = ".")) OR (i = 32);
-      IF (i < 32) & (ch = 0X) THEN res := 0 END
+      UNTIL NOT ((ch >= "0") AND (ch <= "9") OR (ch >= "A") AND (ch <= "Z")
+        OR (ch >= "a") AND (ch <= "z") OR (ch = ".")) OR (i = 32);
+      IF (i < 32) AND (ch = 0X) THEN res := 0 END
     END
   END Check;
 
@@ -52,7 +92,7 @@ MODULE CoreLinker;  (*derived from NW 20.10.2013*)
     VAR ch: CHAR;
   BEGIN
     n := 0; cnt := 0; Files.Read(R, ch);
-    WHILE (cnt < 4) & (ch # 0X) DO
+    WHILE (cnt < 4) AND (ch # 0X) DO
       INC(n, LSL(ORD(ch), cnt * 8)); INC(cnt);
       IF cnt < 4 THEN Files.Read(R, ch) END
     END
@@ -73,7 +113,7 @@ MODULE CoreLinker;  (*derived from NW 20.10.2013*)
       F: Files.File; R: Files.Rider;
       import: ARRAY 16 OF Module;
   BEGIN mod := root; res := 0; nofimps := 0;
-    WHILE (mod # NIL) & (name # mod.desc.name) DO mod := mod.next END ;
+    WHILE (mod # NIL) AND (name # mod.desc.name) DO mod := mod.next END ;
     IF mod = NIL THEN (*load*)
       Check(name);
       IF res = 0 THEN F := ThisFile(name) ELSE F := NIL END ;
@@ -82,7 +122,7 @@ MODULE CoreLinker;  (*derived from NW 20.10.2013*)
         Files.ReadInt(R, size); importing := name1;
         IF ch = versionkey THEN
           Files.ReadString(R, impname);   (*imports*)
-          WHILE (impname[0] # 0X) & (res = 0) DO
+          WHILE (impname[0] # 0X) AND (res = 0) DO
             Files.ReadInt(R, impkey);
             Load(impname, buffer, impmod); import[nofimps] := impmod; importing := name1;
             IF res = 0 THEN
@@ -207,7 +247,7 @@ MODULE CoreLinker;  (*derived from NW 20.10.2013*)
     newmod := mod
   END Load;
 
-  PROCEDURE Copy(from, to, words: LONGINT);
+  PROCEDURE Copy(from, to, words: INTEGER);
     VAR x: INTEGER;
   BEGIN
     WHILE words > 0 DO
@@ -218,7 +258,7 @@ MODULE CoreLinker;  (*derived from NW 20.10.2013*)
 
   PROCEDURE Link*(name: ARRAY OF CHAR; VAR buffer: ARRAY OF INTEGER);
     VAR mod: Module;
-      n: LONGINT;
+      n: INTEGER;
   BEGIN
     FOR n := 0 TO LEN(buffer) - 1 DO buffer[n] := 0 END ;
     AllocPtr := 100H;

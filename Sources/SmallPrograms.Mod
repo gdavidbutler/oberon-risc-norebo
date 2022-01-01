@@ -1,10 +1,45 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 ORP.Compile @/s  Blink.Run  BlinkStop
 
 MODULE Blink;   (*NW 30.5.2013  use of a Task; blinks LED every second*)
-  IMPORT SYSTEM, Oberon;
+  IMPORT Oberon;
   VAR z: INTEGER;
     T: Oberon.Task;
-  
+
   PROCEDURE Run*;
   BEGIN Oberon.Install(T)
   END Run;
@@ -92,7 +127,7 @@ ORP.Compile @/s  PrimeNumbers.Generate 12
 
 MODULE PrimeNumbers;  (*NW 6.9.07; Tabulate prime numbers; for Oberon-07  NW 25.1.2013*)
   IMPORT Texts, Oberon;
-  
+
   VAR n: INTEGER;
     W: Texts.Writer;
     p: ARRAY 400 OF INTEGER;
@@ -107,7 +142,7 @@ MODULE PrimeNumbers;  (*NW 6.9.07; Tabulate prime numbers; for Oberon-07  NW 25.
           v[lim] := sqr; INC(lim); sqr := p[lim]*p[lim]
         END ;
         k := 2; prim := TRUE;
-        WHILE prim & (k < lim) DO
+        WHILE prim AND (k < lim) DO
           INC(k);;
           IF v[k] < x THEN v[k] := v[k] + p[k] END ;
           prim := x # v[k]
@@ -134,17 +169,17 @@ ORP.Compile @/s  Fractions.Generate 16
 
 MODULE Fractions;  (*NW  10.10.07;  Tabulate fractions 1/n*)
   IMPORT Texts, Oberon;
-  
+
   CONST Base = 10; N = 32;
   VAR W: Texts.Writer;
-  
+
   PROCEDURE Generate*;
     VAR i, j, m, r: INTEGER;
       d: ARRAY N OF INTEGER;  (*digits*)
       x: ARRAY N OF INTEGER;  (*index*)
       S: Texts.Scanner;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
-    IF (S.class = Texts.Int) & (S.i < N) THEN
+    IF (S.class = Texts.Int) AND (S.i < N) THEN
       i := 2;
       WHILE i <= S.i DO j := 0;
         WHILE j < i DO x[j] := 0; INC(j) END ;
@@ -171,7 +206,7 @@ MODULE Powers;  (*NW  10.10.07; Tabulate positive and negative powers of 2*)
 
   CONST N = 32; M = 11;  (*M ~ N*log2*)
   VAR W: Texts.Writer;
-  
+
   PROCEDURE Generate*;
     VAR i, k, n, exp: INTEGER;
       c, r, t: INTEGER;
@@ -179,7 +214,7 @@ MODULE Powers;  (*NW  10.10.07; Tabulate positive and negative powers of 2*)
       f: ARRAY N OF INTEGER;
       S: Texts.Scanner;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
-    IF (S.class = Texts.Int) & (S.i <= N) THEN
+    IF (S.class = Texts.Int) AND (S.i <= N) THEN
       n := S.i; d[0] := 1; k := 1; exp := 1;
       WHILE exp < n DO
         (*compute d = 2^exp*)
@@ -214,13 +249,13 @@ ORP.Compile @/s  Harmonic.Compute 200
 MODULE Harmonic;   (*NW 27.1.2013*)
   IMPORT Texts, Oberon;
   VAR W: Texts.Writer;
-  
+
   PROCEDURE Compute*;
       VAR n: INTEGER;
         x0, x1, u: REAL;
         S: Texts.Scanner;
   BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
-    IF (S.class = Texts.Int) & (S.i > 0) THEN
+    IF (S.class = Texts.Int) AND (S.i > 0) THEN
       n := 0; u := 0.0; x0 := 0.0; x1 := 0.0;
       WHILE n < S.i DO INC(n); u := u + 1.0; x0 := x0 + 1.0/u END ;
       WHILE n > 0 DO x1 := x1 + 1.0/u; u := u - 1.0; DEC(n) END ;

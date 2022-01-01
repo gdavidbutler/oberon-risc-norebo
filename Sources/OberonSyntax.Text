@@ -1,3 +1,42 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
+letter  =  "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
+         | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
+         | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
+         | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z".
 digit  =   "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9".
 hexDigit  =  digit | "A" | "B" | "C" | "D" | "E" | "F".
 ident  =  letter {letter | digit}.
@@ -20,7 +59,7 @@ BaseType  =  qualident.
 FieldListSequence  =  FieldList {";" FieldList}.
 FieldList  =  IdentList ":" type.
 IdentList  =  identdef {"," identdef}.
-PointerType  =  "POINTER" "TO" type.
+PointerType  =  "POINTER" "TO" qualident | RecordType.
 ProcedureType  =  "PROCEDURE" [FormalParameters].
 VariableDeclaration  =  IdentList ":" type.
 expression  =  SimpleExpression [relation SimpleExpression].
@@ -28,15 +67,15 @@ relation  =  "=" | "#" | "<" | "<=" | ">" | ">=" | "IN" | "IS".
 SimpleExpression  =  ["+" | "-"] term {AddOperator term}.
 AddOperator  =  "+" | "-" | "OR".
 term  =  factor {MulOperator factor}.
-MulOperator  =  "*" | "/" | "DIV" | "MOD" | "&".
-factor  =  number | string | "NIL" | "TRUE" | "FALSE" |
-  set | designator [ActualParameters] | "(" expression ")" | "~" factor.
+MulOperator  =  "*" | "/" | "DIV" | "MOD" | "AND".
+factor  =  number | string | "NIL" | "TRUE" | "FALSE" | set
+         | designator [ActualParameters] | "(" expression ")" | "NOT" factor.
 designator  =  qualident {selector}.
 selector  =  "." ident | "[" ExpList "]" | "^" |  "(" qualident ")".
 set  =  "{" [element {"," element}] "}".
 element  =  expression [".." expression].
 ExpList  =  expression {"," expression}.
-ActualParameters  =  "(" [ExpList] ")" .
+ActualParameters  =  "(" [ExpList] ")".
 statement  =  [assignment | ProcedureCall | IfStatement | CaseStatement |
   WhileStatement | RepeatStatement | ForStatement].
 assignment  =  designator ":=" expression.
@@ -45,20 +84,17 @@ StatementSequence  =  statement {";" statement}.
 IfStatement  =  "IF" expression "THEN" StatementSequence
   {"ELSIF" expression "THEN" StatementSequence}
   ["ELSE" StatementSequence] "END".
-CaseStatement  =  "CASE" expression "OF" case {"|" case} "END".
-Case  =  CaseLabelList ":"  StatementSequence.
-CaseLabelList  = LabelRange {"," LabelRange}.
-LabelRange  =  label [".." label].
-label  =  integer | string | ident.
+CaseStatement  =  "CASE" qualident "OF" Case {"|" Case} "END".
+Case  =  qualident ":"  StatementSequence.
 WhileStatement  =  "WHILE" expression "DO" StatementSequence
-{"ELSIF" expression "DO" StatementSequence} "END".
+  {"ELSIF" expression "DO" StatementSequence} "END".
 RepeatStatement  =  "REPEAT" StatementSequence "UNTIL" expression.
 ForStatement  =  "FOR" ident ":=" expression "TO" expression ["BY" ConstExpression]
-"DO" StatementSequence "END".
+  "DO" StatementSequence "END".
 ProcedureDeclaration  =  ProcedureHeading ";" ProcedureBody ident.
 ProcedureHeading  =  "PROCEDURE" identdef [FormalParameters].
 ProcedureBody  =  DeclarationSequence ["BEGIN" StatementSequence]
-    ["RETURN" expression] "END".
+  ["RETURN" expression] "END".
 DeclarationSequence  =  ["CONST" {ConstDeclaration ";"}]
   ["TYPE" {TypeDeclaration ";"}]
   ["VAR" {VariableDeclaration ";"}]

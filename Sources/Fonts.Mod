@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Fonts; (*JG 18.11.90; PDR 8.6.12; NW 18.1.2019*)
   IMPORT SYSTEM, Files;
 
@@ -16,7 +51,7 @@ MODULE Fonts; (*JG 18.11.90; PDR 8.6.12; NW 18.1.2019*)
     LargeFont = POINTER TO LargeFontDesc;
     RunRec = RECORD beg, end: BYTE END ;
     BoxRec = RECORD dx, x, y, w, h: BYTE END ;
-    
+
   (* raster sizes: Syntax8 1367, Syntax10 1628, Syntax12 1688, Syntax14 1843, Syntax14b 1983,
       Syntax16 2271, Syntax20 3034, Syntac24 4274, Syntax24b 4302  *)
 
@@ -48,7 +83,7 @@ PROCEDURE This*(name: ARRAY OF CHAR): Font;
   END RdInt16;
 
 BEGIN F := root;
-  WHILE (F # NIL) & (name # F.name) DO F := F.next END;
+  WHILE (F # NIL) AND (name # F.name) DO F := F.next END;
   IF F = NIL THEN
     f := Files.Old(name);
     IF f # NIL THEN
@@ -80,8 +115,8 @@ BEGIN F := root;
         (*null pattern for characters not in a run*)
         INC(a0, 3); a := a0+2; j := 0; k := 0; m := 0;
         WHILE k < NofRuns DO
-          WHILE (m < run[k].beg) & (m < 128) DO F.T[m] := a0; INC(m) END;
-          WHILE (m < run[k].end) & (m < 128) DO
+          WHILE (m < run[k].beg) AND (m < 128) DO F.T[m] := a0; INC(m) END;
+          WHILE (m < run[k].end) AND (m < 128) DO
             F.T[m] := a+3;
             SYSTEM.PUT(a, box[j].dx); SYSTEM.PUT(a+1, box[j].x); SYSTEM.PUT(a+2, box[j].y);
             SYSTEM.PUT(a+3, box[j].w); SYSTEM.PUT(a+4, box[j].h); INC(a, 5);

@@ -1,3 +1,43 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(* Project Norebo
+ * Copyright (C)2019 Peter De Wachter
+ *
+ * Released under the following notice:
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Oberon; (*derived from JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2013*)
   IMPORT SYSTEM, Norebo, Kernel, Files, Modules, RS232, Texts;
 
@@ -15,12 +55,12 @@ MODULE Oberon; (*derived from JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.
       handle: Handler
     END;
 
-  VAR User*: ARRAY 8 OF CHAR; Password*: LONGINT;
+  VAR User*: ARRAY 8 OF CHAR; Password*: INTEGER;
     Log*: Texts.Text;
 
     Par*: RECORD
       text*: Texts.Text;
-      pos*: LONGINT
+      pos*: INTEGER
     END;
 
     NofTasks*: INTEGER;
@@ -30,8 +70,8 @@ MODULE Oberon; (*derived from JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.
 
   (*user identification*)
 
-  PROCEDURE Code(VAR s: ARRAY OF CHAR): LONGINT;
-    VAR i: INTEGER; a, b, c: LONGINT;
+  PROCEDURE Code(VAR s: ARRAY OF CHAR): INTEGER;
+    VAR i: INTEGER; a, b, c: INTEGER;
   BEGIN
     a := 0; b := 0; i := 0;
     WHILE s[i] # 0X DO
@@ -46,21 +86,21 @@ MODULE Oberon; (*derived from JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.
   BEGIN User := user; Password := Code(password)
   END SetUser;
 
-  PROCEDURE Clock*(): LONGINT;
+  PROCEDURE Clock*(): INTEGER;
   BEGIN RETURN Kernel.Clock()
   END Clock;
 
-  PROCEDURE SetClock* (d: LONGINT);
+  PROCEDURE SetClock* (d: INTEGER);
   BEGIN Kernel.SetClock(d)
   END SetClock;
 
-  PROCEDURE Time*(): LONGINT;
+  PROCEDURE Time*(): INTEGER;
   BEGIN RETURN Kernel.Time()
   END Time;
 
   (*log management*)
 
-  PROCEDURE OutputLog(T: Texts.Text; op: INTEGER; beg, end: LONGINT);
+  PROCEDURE OutputLog(T: Texts.Text; op: INTEGER; beg, end: INTEGER);
     VAR R: Texts.Reader;
       B: Texts.Buffer;
       ch: CHAR;
@@ -83,7 +123,7 @@ MODULE Oberon; (*derived from JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.
 
   (*command interpretation*)
 
-  PROCEDURE SetPar*(T: Texts.Text; pos: LONGINT);
+  PROCEDURE SetPar*(T: Texts.Text; pos: INTEGER);
   BEGIN Par.text := T; Par.pos := pos
   END SetPar;
 
@@ -92,7 +132,7 @@ MODULE Oberon; (*derived from JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.
       i, j: INTEGER; ch: CHAR;
       Mname, Cname: ARRAY 32 OF CHAR;
   BEGIN i := 0; ch := name[0];
-    WHILE (ch # ".") & (ch # 0X) DO Mname[i] := ch; INC(i); ch := name[i] END ;
+    WHILE (ch # ".") AND (ch # 0X) DO Mname[i] := ch; INC(i); ch := name[i] END ;
     IF ch = "." THEN
       Mname[i] := 0X; INC(i);
       Modules.Load(Mname, mod); res := Modules.res;
@@ -107,7 +147,7 @@ MODULE Oberon; (*derived from JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.
     END
   END Call;
 
-  PROCEDURE GetSelection* (VAR text: Texts.Text; VAR beg, end, time: LONGINT);
+  PROCEDURE GetSelection* (VAR text: Texts.Text; VAR beg, end, time: INTEGER);
   BEGIN time := -1
   END GetSelection;
 
@@ -129,7 +169,7 @@ MODULE Oberon; (*derived from JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.
 
   PROCEDURE NewTask*(h: Handler; period: INTEGER): Task;
     VAR t: Task;
-  BEGIN NEW(t); t.state := off; t.next := t; t.handle := h; t.period := period; RETURN t
+  BEGIN NEW(t); t.state := off; t.next := NIL; t.handle := h; t.period := period; RETURN t
   END NewTask;
 
   PROCEDURE Install* (T: Task);
@@ -169,7 +209,7 @@ MODULE Oberon; (*derived from JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.
     SYSTEM.LDREG(14, Kernel.stackOrg); (*reset stack pointer*) Loop
   END Reset;
 
-  PROCEDURE Ignore(T: Texts.Text; op: INTEGER; beg, end: LONGINT);
+  PROCEDURE Ignore(T: Texts.Text; op: INTEGER; beg, end: INTEGER);
   END Ignore;
 
   PROCEDURE ParamCall*;
@@ -192,13 +232,13 @@ MODULE Oberon; (*derived from JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.
   BEGIN u := SYSTEM.REG(15); SYSTEM.GET(u - 4, v); w := v DIV 10H MOD 10H; (*trap number*)
     IF w = 0 THEN Kernel.New(a, b)
     ELSE (*trap*) pos := v DIV 100H MOD 10000H; mod := Modules.root;
-      WHILE (mod # NIL) & ((u < mod.code) OR (u >= mod.imp)) DO mod := mod.next END ;
+      WHILE (mod # NIL) AND ((u < mod.code) OR (u >= mod.imp)) DO mod := mod.next END ;
       IF mod # NIL THEN name := SYSTEM.ADR(mod.name) ELSE name := 0 END ;
       Norebo.Trap(w, name, pos)
     END
   END Trap;
 
-BEGIN 
+BEGIN
   Kernel.Install(SYSTEM.ADR(Trap), 20H);
   User[0] := 0X; ActCnt := 0; CurTask := NewTask(GC, 1000); Install(CurTask);
   OpenLog; ParamCall;

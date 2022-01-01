@@ -29,11 +29,11 @@ cd ..
 
 echo
 NOREBO_PATH=oberon:norebo $ROOT/run CoreLinker.LinkDisk Modules Oberon.dsk
-ARG=`(ls $ROOT/Sources; ls $ROOT/Host; ls oberon) | awk '{
+ARG=`(ls $ROOT/Host; ls $ROOT/Sources; ls $ROOT/Fnt; ls oberon) | awk '{
   split($1, e, ".");
   if (e[2] == "rsx")
     printf("%s.rsx=>%s.rsc\n", e[1], e[1]);
   else
    printf("%s=>%s\n", $1, $1);
 }'`
-NOREBO_PATH=$ROOT/Host:$ROOT/Sources:oberon:norebo $ROOT/run VDiskUtil.InstallFiles Oberon.dsk $ARG
+NOREBO_PATH=$ROOT/Host:$ROOT/Sources:$ROOT/Fnt:oberon:norebo $ROOT/run VDiskUtil.InstallFiles Oberon.dsk $ARG

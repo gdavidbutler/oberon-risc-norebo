@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
   IMPORT SYSTEM, Display, Viewers, Input, Fonts, Texts, Graphics, Oberon, MenuViewers;
 
@@ -43,7 +78,7 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
       END ;
 
     SelQuery = RECORD (Display.FrameMsg)
-        f: Frame; time: LONGINT
+        f: Frame; time: INTEGER
       END ;
 
     FocusQuery = RECORD (Display.FrameMsg)
@@ -207,7 +242,7 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
   END Macro;
 
   PROCEDURE CaptionCopy(F: Frame;
-      x1, y1: INTEGER; T: Texts.Text; beg, end: LONGINT): Graphics.Caption;
+      x1, y1: INTEGER; T: Texts.Text; beg, end: INTEGER): Graphics.Caption;
     VAR ch: CHAR;
       dx, w, x2, y2, w1, h1: INTEGER;
       cap: Graphics.Caption;
@@ -237,7 +272,7 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
   PROCEDURE Edit(F: Frame; x0, y0: INTEGER; k0: SET);
     VAR obj: Graphics.Object;
       x1, y1, w, h, t: INTEGER;
-      beg, end, time: LONGINT;
+      beg, end, time: INTEGER;
       k1, k2: SET;
       mark, newmark: Location;
       T: Texts.Text;
@@ -252,9 +287,9 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
     IF k0 = {2} THEN (*left key*)
       w := ABS(x1-x0); h := ABS(y1-y0);
       IF k1 = {2} THEN
-        IF (w < 7) & (h < 7) THEN (*set mark*)
-          IF (x1 - markW >= F.X) & (x1 + markW < F.X1) &
-            (y1 - markW >= F.Y) & (y1 + markW < F.Y1) THEN
+        IF (w < 7) AND (h < 7) THEN (*set mark*)
+          IF (x1 - markW >= F.X) AND (x1 + markW < F.X1) AND
+            (y1 - markW >= F.Y) AND (y1 + markW < F.Y1) THEN
             Defocus(F); Oberon.PassFocus(Viewers.This(F.X, F.Y));
             F.mark.x := x1; F.mark.y := y1; F.marked := TRUE; FlipMark(x1, y1)
           END
@@ -288,7 +323,7 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
         IF (x0 # x1) OR (y0 # y1) THEN
           Fd := This(x1, y1); Erase(F);
           IF Fd = F THEN Graphics.Move(G, x1-x0, y1-y0)
-          ELSIF (Fd # NIL) & (Fd.graph = G) THEN
+          ELSIF (Fd # NIL) AND (Fd.graph = G) THEN
             Graphics.Move(G, (x1-Fd.x-x0+F.x) DIV 4 * 4, (y1-Fd.y-y0+F.y) DIV 4 * 4)
           END ;
           Draw(F); Mark(F, 1)
@@ -308,7 +343,7 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
     ELSIF k0 = {0} THEN (*right key: select*)
       newcap := NIL;
       IF k1 = {0} THEN Deselect(F) END ;
-      IF (ABS(x0-x1) < 7) & (ABS(y0-y1) < 7) THEN
+      IF (ABS(x0-x1) < 7) AND (ABS(y0-y1) < 7) THEN
         obj := Graphics.ThisObj(G, x1 - F.x, y1 - F.y);
         IF obj # NIL THEN Graphics.SelectObj(G, obj); DrawObj(F, obj) END
       ELSE
@@ -338,7 +373,7 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
   END InsertChar;
 
   PROCEDURE DeleteChar(F: Frame);
-    VAR w1, h1: INTEGER; ch: CHAR; pos: LONGINT;
+    VAR w1, h1: INTEGER; ch: CHAR; pos: INTEGER;
       DM: DispMsg; R: Texts.Reader;
   BEGIN DM.graph := F.graph;
     IF newcap.len > 0 THEN
@@ -352,10 +387,10 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
     END
   END DeleteChar;
 
-  PROCEDURE GetSelection(F: Frame; VAR text: Texts.Text; VAR beg, end, time: LONGINT);
+  PROCEDURE GetSelection(F: Frame; VAR text: Texts.Text; VAR beg, end, time: INTEGER);
     VAR obj: Graphics.Object;
   BEGIN obj := F.graph.sel;
-    IF (obj # NIL) & (F.graph.time >= time) THEN
+    IF (obj # NIL) AND (F.graph.time >= time) THEN
       CASE obj OF Graphics.Caption:
         beg := obj.pos; end := obj.pos + obj.len; text := Graphics.T; time := F.graph.time
       END
@@ -376,12 +411,12 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
         ELSIF M.id = Oberon.consume THEN
           IF M.ch = 7FX THEN (*DEL*)
             Erase(G); Graphics.Delete(G.graph); Mark(G, 1)
-          ELSIF (M.ch >= 20X) & (M.ch < 7FX) THEN
+          ELSIF (M.ch >= 20X) AND (M.ch < 7FX) THEN
             IF newcap # NIL THEN InsertChar(G, M.ch); Mark(G, 1)
             ELSIF G.marked THEN
               Defocus(G); Deselect(G); NewCaption(G, M.col, M.fnt); InsertChar(G, M.ch)
             END
-          ELSIF (M.ch = 8X) & (newcap # NIL) THEN DeleteChar(G); Mark(G, 1)
+          ELSIF (M.ch = 8X) AND (newcap # NIL) THEN DeleteChar(G); Mark(G, 1)
           END
         END
       | UpdateMsg:
@@ -398,13 +433,13 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
       | ChangedMsg:
           IF M.graph = G.graph THEN SetChangeMark(G, M.mode) END
       | SelQuery:
-          IF (G.graph.sel # NIL) & (M.time < G.graph.time) THEN M.f := G(Frame); M.time := G.graph.time END
+          IF (G.graph.sel # NIL) AND (M.time < G.graph.time) THEN M.f := G(Frame); M.time := G.graph.time END
       | FocusQuery: IF G.marked THEN M.f := G END
-      | PosQuery: IF (G.X <= M.x) & (M.x < G.X1) & (G.Y <= M.y) & (M.y < G.Y1) THEN M.f := G END
+      | PosQuery: IF (G.X <= M.x) AND (M.x < G.X1) AND (G.Y <= M.y) AND (M.y < G.Y1) THEN M.f := G END
       | DispMsg:
         DM := M;
         x := G.x + newcap.x + newcap.w; y := G.y + newcap.y;
-        IF (DM.graph = G.graph) & (x >= G.X) & (x + DM.w < G.X1) & (y >= G.Y) & (y < G.Y1) THEN
+        IF (DM.graph = G.graph) AND (x >= G.X) AND (x + DM.w < G.X1) AND (y >= G.Y) AND (y < G.Y1) THEN
           Display.CopyPattern(Oberon.CurCol, DM.pat, x + DM.x1, y + DM.y1, 2);
           Display.ReplConst(Display.white, x, y, DM.w, newcap.h, 2)
         END
@@ -443,7 +478,7 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
     IF y+h >= F.Y1 THEN h := F.Y1 - y END ;
     Display.ReplPattern(col, patadr, x, y, w, h, mode)
   END ReplPattern;
-  
+
   PROCEDURE DrawLine(obj: Graphics.Object; VAR M: Graphics.Msg);
     (*M.mode = 0: draw according to state,
         = 1: normal -> selected,
@@ -453,9 +488,9 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
   BEGIN
     CASE M OF DrawMsg:
       x := obj.x + M.x; y := obj.y + M.y; w := obj.w; h := obj.h; f := M.f;
-      IF (x+w > f.X) & (x < f.X1) & (y+h > f.Y) & (y < f.Y1) THEN
+      IF (x+w > f.X) AND (x < f.X1) AND (y+h > f.Y) AND (y < f.Y1) THEN
         col := obj.col;
-        IF (M.mode = 0) & obj.selected OR (M.mode = 1) THEN
+        IF (M.mode = 0) AND obj.selected OR (M.mode = 1) THEN
           ReplPattern(f, col, Display.grey, x, y, w, h, Display.replace)
         ELSIF M.mode IN {0, 2} THEN ReplConst(f, col, x, y, w, h, Display.replace)
         ELSIF M.mode = 3 THEN ReplConst(f, Display.black, x, y, w, h, Display.replace)  (*erase*)
@@ -472,7 +507,7 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
   BEGIN
     CASE M OF DrawMsg:
       x := obj.x + M.x; y := obj.y + M.y; w := obj.w; h := obj.h; f := M.f;
-      IF (f.X <= x) & (x <= f.X1) & (f.Y <= y) & (y+h <= f.Y1) THEN
+      IF (f.X <= x) AND (x <= f.X1) AND (f.Y <= y) AND (y+h <= f.Y1) THEN
         IF x+w > f.X1 THEN w := f.X1-x END ;
         Texts.OpenReader(R, Graphics.T, obj(Graphics.Caption).pos); Texts.Read(R, ch);
         IF M.mode = 0 THEN
@@ -499,7 +534,7 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
   BEGIN
     CASE M OF DrawMsg:
       x := obj.x + M.x; y := obj.y + M.y; w := obj.w; h := obj.h; f := M.f;
-      IF (x+w > f.X) & (x < f.X1) & (y+h > f.Y) & (y < f.Y1) THEN
+      IF (x+w > f.X) AND (x < f.X1) AND (y+h > f.Y) AND (y < f.Y1) THEN
         M1.x := x; M1.y := y;
         IF M.mode = 0 THEN
           M1.f := f; M1.col := obj.col; M1.mode := 0; Graphics.DrawMac(obj(Graphics.Macro).mac, M1);
@@ -513,7 +548,7 @@ MODULE GraphicFrames; (*NW 18.4.88 / 18.11.2013 / 27.8.2018*)
 
   (*---------------------------------------------------------------*)
 
-  PROCEDURE Open*(G: Frame; graph: Graphics.Graph); 
+  PROCEDURE Open*(G: Frame; graph: Graphics.Graph);
   BEGIN G.graph := graph; G.Xg := 0; G.Yg := 0; G.x := G.X; G.y := G.Y;
     G.col := Display.black; G.marked := FALSE;
     G.mark.next := NIL; G.ticked := TRUE; G.handle := Handle

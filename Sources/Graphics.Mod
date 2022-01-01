@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
   IMPORT SYSTEM, Files, Modules, Fonts, (*Printer,*) Texts, Oberon;
 
@@ -27,7 +62,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
     Name* = ARRAY NameLen OF CHAR;
 
     GraphDesc* = RECORD
-        time*: LONGINT;
+        time*: INTEGER;
         sel*, first: Object;
         changed*: BOOLEAN
       END ;
@@ -104,7 +139,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
   PROCEDURE ThisObj*(G: Graph; x, y: INTEGER): Object;
     VAR obj: Object;
   BEGIN obj := G.first;
-    WHILE (obj # NIL) & ~obj.do.selectable(obj, x ,y) DO obj := obj.next END ;
+    WHILE (obj # NIL) AND NOT obj.do.selectable(obj, x ,y) DO obj := obj.next END ;
     RETURN obj
   END ThisObj;
 
@@ -119,7 +154,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
     IF x1 < x0 THEN t := x0; x0 := x1; x1 := t END ;
     IF y1 < y0 THEN t := y0; y0 := y1; y1 := t END ;
     WHILE obj # NIL DO
-      IF (x0 <= obj.x) & (obj.x + obj.w <= x1) & (y0 <= obj.y) & (obj.y + obj.h <= y1) THEN
+      IF (x0 <= obj.x) AND (obj.x + obj.w <= x1) AND (y0 <= obj.y) AND (obj.y + obj.h <= y1) THEN
         obj.selected := TRUE; G.sel := obj
       END ;
       obj := obj.next
@@ -175,15 +210,15 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
     VAR obj, ob0: Object; x0, x1, y0, y1: INTEGER;
   BEGIN obj := G.first; G.changed := TRUE;
     WHILE obj # NIL DO
-      IF obj.selected & ~(obj IS Caption) THEN
+      IF obj.selected AND NOT (obj IS Caption) THEN
         x0 := obj.x; x1 := obj.w + x0; y0 := obj.y; y1 := obj.h + y0;
         IF dx = 0 THEN (*vertical move*)
           ob0 := G.first;
           WHILE ob0 # NIL DO
-            IF ~ob0.selected & (ob0 IS Line) & (x0 <= ob0.x) & (ob0.x <= x1) & (ob0.w < ob0.h) THEN
-              IF (y0 <= ob0.y) & (ob0.y <= y1) THEN
+            IF NOT ob0.selected AND (ob0 IS Line) AND (x0 <= ob0.x) AND (ob0.x <= x1) AND (ob0.w < ob0.h) THEN
+              IF (y0 <= ob0.y) AND (ob0.y <= y1) THEN
                 INC(ob0.y, dy); DEC(ob0.h, dy); ob0.marked := TRUE
-              ELSIF (y0 <= ob0.y + ob0.h) & (ob0.y + ob0.h <= y1) THEN
+              ELSIF (y0 <= ob0.y + ob0.h) AND (ob0.y + ob0.h <= y1) THEN
                 INC(ob0.h, dy); ob0.marked := TRUE
               END
             END ;
@@ -192,10 +227,10 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
         ELSIF dy = 0 THEN (*horizontal move*)
           ob0 := G.first;
           WHILE ob0 # NIL DO
-            IF ~ob0.selected & (ob0 IS Line) & (y0 <= ob0.y) & (ob0.y <= y1) & (ob0.h < ob0.w) THEN
-              IF (x0 <= ob0.x) & (ob0.x <= x1) THEN
+            IF NOT ob0.selected AND (ob0 IS Line) AND (y0 <= ob0.y) AND (ob0.y <= y1) AND (ob0.h < ob0.w) THEN
+              IF (x0 <= ob0.x) AND (ob0.x <= x1) THEN
                 INC(ob0.x, dx); DEC(ob0.w, dx); ob0.marked := TRUE
-              ELSIF (x0 <= ob0.x + ob0.w) & (ob0.x + ob0.w <= x1) THEN
+              ELSIF (x0 <= ob0.x + ob0.w) AND (ob0.x + ob0.w <= x1) THEN
                 INC(ob0.w, dx); ob0.marked := TRUE
               END
             END ;
@@ -228,7 +263,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
   PROCEDURE Delete*(G: Graph);
     VAR obj, pred: Object;
   BEGIN G.sel := NIL; G.changed := TRUE; obj := G.first;
-    WHILE (obj # NIL) & obj.selected DO obj := obj.next END ;
+    WHILE (obj # NIL) AND obj.selected DO obj := obj.next END ;
     G.first := obj;
     IF obj # NIL THEN
       pred := obj; obj := obj.next;
@@ -254,7 +289,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
   PROCEDURE FontNo*(VAR W: Files.Rider; VAR C: Context; fnt: Fonts.Font): INTEGER;
     VAR fno: INTEGER;
   BEGIN fno := 0;
-    WHILE (fno < C.nofonts) & (C.font[fno] # fnt) DO INC(fno) END ;
+    WHILE (fno < C.nofonts) AND (C.font[fno] # fnt) DO INC(fno) END ;
     IF fno = C.nofonts THEN
       Files.WriteByte(W, 0); Files.WriteByte(W, 0); Files.WriteByte(W, fno);
       Files.WriteString(W, fnt.name); C.font[fno] := fnt; INC(C.nofonts)
@@ -267,7 +302,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
   BEGIN
     WHILE obj # NIL DO
       cno := 1;
-      WHILE (cno < C.nofclasses) & (obj.do.new # C.class[cno]) DO INC(cno) END ;
+      WHILE (cno < C.nofclasses) AND (obj.do.new # C.class[cno]) DO INC(cno) END ;
       IF cno = C.nofclasses THEN
         Files.WriteByte(W, 0); Files.WriteByte(W, 2); Files.WriteByte(W, cno);
         Files.WriteString(W, obj.do.module); Files.WriteString(W, obj.do.allocator);
@@ -330,7 +365,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
       fnt: Fonts.Font;
       name, name1: ARRAY 32 OF CHAR;
   BEGIN obj := NIL; Files.ReadByte(R, cno);
-    WHILE ~R.eof & (cno < 255) DO
+    WHILE NOT R.eof AND (cno < 255) DO
       IF cno = 0 THEN
         Files.ReadByte(R, m); Files.ReadByte(R, n); Files.ReadString(R, name);
         IF m = 0 THEN fnt := Fonts.This(name); C.font[n] := fnt
@@ -377,7 +412,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
       F: Files.File; R: Files.Rider; C: Context;
       Lname, Fname: ARRAY 32 OF CHAR;
   BEGIN L := FirstLib; i := 0;
-    WHILE (L # NIL) & (L.name # name) DO L := L.next END ;
+    WHILE (L # NIL) AND (L.name # name) DO L := L.next END ;
     IF L = NIL THEN
       (*load library from file*) i := 0;
       WHILE name[i] > 0X DO Fname[i] := name[i]; INC(i) END ;
@@ -387,7 +422,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
          WMsg("loading ", Fname); Files.Set(R, F, 0); Files.Read(R, ch);
         IF ch = LibFileId THEN
           IF L = NIL THEN NEW(L); L.name := name; L.next := FirstLib; FirstLib := L END ;
-          L.first := NIL; InitContext(C); 
+          L.first := NIL; InitContext(C);
           LoadElems(R, C, obj);
           WHILE obj # NIL DO
             NEW(mh); mh.first := obj;
@@ -416,7 +451,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
       C: Context;
       Gname: ARRAY 32 OF CHAR;
   BEGIN L := FirstLib;
-    WHILE (L # NIL) & (L.name # Fname) DO L := L.next END ;
+    WHILE (L # NIL) AND (L.name # Fname) DO L := L.next END ;
     IF L # NIL THEN i := 0;
       WHILE Fname[i] > 0X DO Gname[i] := Fname[i]; INC(i) END ;
       Gname[i] := "."; Gname[i+1] := "L"; Gname[i+2] := "i"; Gname[i+3] := "b"; Gname[i+4] := 0X;
@@ -439,7 +474,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
   PROCEDURE ThisMac*(L: Library; Mname: ARRAY OF CHAR): MacHead;
     VAR mh: MacHead;
   BEGIN mh := L.first;
-    WHILE (mh # NIL) & (mh.name # Mname) DO mh := mh.next END ;
+    WHILE (mh # NIL) AND (mh.name # Mname) DO mh := mh.next END ;
     RETURN mh
   END ThisMac;
 
@@ -487,7 +522,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
   PROCEDURE InsertMac*(mh: MacHead; L: Library; VAR new: BOOLEAN);
     VAR mh1: MacHead;
   BEGIN mh.lib := L; mh1 := L.first;
-    WHILE (mh1 # NIL) & (mh1.name # mh.name) DO mh1 := mh1.next END ;
+    WHILE (mh1 # NIL) AND (mh1.name # mh.name) DO mh1 := mh1.next END ;
     IF mh1 = NIL THEN
       new := TRUE; mh.next := L.first; L.first := mh
     ELSE
@@ -520,7 +555,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
 
   PROCEDURE LineSelectable(obj: Object; x, y: INTEGER): BOOLEAN;
   BEGIN
-    RETURN (obj.x <= x) & (x < obj.x + obj.w) & (obj.y <= y) & (y < obj.y + obj.h)
+    RETURN (obj.x <= x) AND (x < obj.x + obj.w) AND (obj.y <= y) AND (y < obj.y + obj.h)
   END LineSelectable;
 
   PROCEDURE ReadLine(obj: Object; VAR R: Files.Rider; VAR C: Context);
@@ -558,7 +593,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
 
   PROCEDURE ChangeCaption(obj: Object;  VAR M: Msg);
     VAR dx, x1, dy, y1, w, w1, h1, len: INTEGER;
-      pos: LONGINT;
+      pos: INTEGER;
       ch: CHAR; patadr: INTEGER; fnt: Fonts.Font;
       R: Texts.Reader;
   BEGIN
@@ -577,7 +612,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
 
   PROCEDURE CaptionSelectable(obj: Object; x, y: INTEGER): BOOLEAN;
   BEGIN
-    RETURN (obj.x <= x) & (x < obj.x + obj.w) & (obj.y <= y) & (y < obj.y + obj.h)
+    RETURN (obj.x <= x) AND (x < obj.x + obj.w) AND (obj.y <= y) AND (y < obj.y + obj.h)
   END CaptionSelectable;
 
   PROCEDURE ReadCaption(obj: Object; VAR R: Files.Rider; VAR C: Context);
@@ -635,7 +670,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
 
   PROCEDURE MacroSelectable(obj: Object; x, y: INTEGER): BOOLEAN;
   BEGIN
-    RETURN (obj.x <= x) & (x <= obj.x + 8) & (obj.y <= y) & (y <= obj.y + 8)
+    RETURN (obj.x <= x) AND (x <= obj.x + 8) AND (obj.y <= y) AND (y <= obj.y + 8)
   END MacroSelectable;
 
   PROCEDURE ReadMacro(obj: Object; VAR R: Files.Rider; VAR C: Context);
@@ -647,7 +682,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
   PROCEDURE WriteMacro(obj: Object; cno: INTEGER; VAR W1: Files.Rider; VAR C: Context);
     VAR lno: INTEGER;
   BEGIN lno := 0;
-    WHILE (lno < C.noflibs) & (obj(Macro).mac.lib # C.lib[lno]) DO INC(lno) END ;
+    WHILE (lno < C.noflibs) AND (obj(Macro).mac.lib # C.lib[lno]) DO INC(lno) END ;
     IF lno = C.noflibs THEN
       Files.WriteByte(W1, 0); Files.WriteByte(W1, 1); Files.WriteByte(W1, lno);
       Files.WriteString(W1, obj(Macro).mac.lib.name); C.lib[lno] := obj(Macro).mac.lib; INC(C.noflibs)
@@ -663,7 +698,7 @@ MODULE Graphics;   (*NW 21.12.89 / 18.11.201 / 8.4.2016*)
     END
   END PrintMacro; *)
 
-  PROCEDURE Notify(T: Texts.Text; op: INTEGER; beg, end: LONGINT);
+  PROCEDURE Notify(T: Texts.Text; op: INTEGER; beg, end: INTEGER);
   BEGIN
   END Notify;
 

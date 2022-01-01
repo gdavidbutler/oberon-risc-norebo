@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
   IMPORT SYSTEM, Kernel, Files, Modules, Input, Display, Viewers, Fonts, Texts;
 
@@ -9,7 +44,7 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
 
   TYPE Painter* = PROCEDURE (x, y: INTEGER);
     Marker* = RECORD Fade*, Draw*: Painter END;
-    
+
     Cursor* = RECORD
         marker*: Marker; on*: BOOLEAN; X*, Y*: INTEGER
     END;
@@ -24,9 +59,9 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
     END;
 
     SelectionMsg* = RECORD (Display.FrameMsg)
-      time*: LONGINT;
+      time*: INTEGER;
       text*: Texts.Text;
-      beg*, end*: LONGINT
+      beg*, end*: INTEGER
     END;
 
     ControlMsg* = RECORD (Display.FrameMsg)
@@ -47,7 +82,7 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
       handle: Handler
     END;
 
-  VAR User*: ARRAY 8 OF CHAR; Password*: LONGINT;
+  VAR User*: ARRAY 8 OF CHAR; Password*: INTEGER;
     Arrow*, Star*: Marker;
     Mouse, Pointer: Cursor;
     FocusViewer*: Viewers.Viewer;
@@ -57,7 +92,7 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
       vwr*: Viewers.Viewer;
       frame*: Display.Frame;
       text*: Texts.Text;
-      pos*: LONGINT
+      pos*: INTEGER
     END;
 
     CurFnt*: Fonts.Font;
@@ -71,8 +106,8 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
 
   (*user identification*)
 
-  PROCEDURE Code(VAR s: ARRAY OF CHAR): LONGINT;
-    VAR i: INTEGER; a, b, c: LONGINT;
+  PROCEDURE Code(VAR s: ARRAY OF CHAR): INTEGER;
+    VAR i: INTEGER; a, b, c: INTEGER;
   BEGIN
     a := 0; b := 0; i := 0;
     WHILE s[i] # 0X DO
@@ -87,15 +122,15 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
   BEGIN User := user; Password := Code(password)
   END SetUser;
 
-  PROCEDURE Clock*(): LONGINT;
+  PROCEDURE Clock*(): INTEGER;
   BEGIN RETURN Kernel.Clock()
   END Clock;
 
-  PROCEDURE SetClock* (d: LONGINT);
+  PROCEDURE SetClock* (d: INTEGER);
   BEGIN Kernel.SetClock(d)
   END SetClock;
 
-  PROCEDURE Time*(): LONGINT;
+  PROCEDURE Time*(): INTEGER;
   BEGIN RETURN Kernel.Time()
   END Time;
 
@@ -111,7 +146,7 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
     IF Y < 14 THEN Y := 14 ELSIF Y > DH THEN Y := DH END;
     Display.CopyPattern(Display.white, Display.arrow, X, Y - 14, Display.invert)
   END FlipArrow;
-     
+
   PROCEDURE FlipStar (X, Y: INTEGER);
   BEGIN
     IF X < CL THEN
@@ -126,17 +161,17 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
   PROCEDURE OpenCursor(VAR c: Cursor);
   BEGIN c.on := FALSE; c.X := 0; c.Y := 0
   END OpenCursor;
- 
+
   PROCEDURE FadeCursor(VAR c: Cursor);
   BEGIN IF c.on THEN c.marker.Fade(c.X, c.Y); c.on := FALSE END
   END FadeCursor;
 
   PROCEDURE DrawCursor(VAR c: Cursor; m: Marker; x, y: INTEGER);
   BEGIN
-    IF c.on & ((x # c.X) OR (y # c.Y) OR (m.Draw # c.marker.Draw)) THEN
+    IF c.on AND ((x # c.X) OR (y # c.Y) OR (m.Draw # c.marker.Draw)) THEN
       c.marker.Fade(c.X, c.Y); c.on := FALSE
     END;
-    IF ~c.on THEN
+    IF NOT c.on THEN
       m.Draw(x, y); c.marker := m; c.X := x; c.Y := y; c.on := TRUE
     END
   END DrawCursor;
@@ -161,10 +196,10 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
 
   PROCEDURE RemoveMarks* (X, Y, W, H: INTEGER);
   BEGIN
-    IF (Mouse.X > X - 16) & (Mouse.X < X + W + 16) & (Mouse.Y > Y - 16) & (Mouse.Y < Y + H + 16) THEN
+    IF (Mouse.X > X - 16) AND (Mouse.X < X + W + 16) AND (Mouse.Y > Y - 16) AND (Mouse.Y < Y + H + 16) THEN
       FadeCursor(Mouse)
     END;
-    IF (Pointer.X > X - 8) & (Pointer.X < X + W + 8) & (Pointer.Y > Y - 8) & (Pointer.Y < Y + H + 8) THEN
+    IF (Pointer.X > X - 8) AND (Pointer.X < X + W + 8) AND (Pointer.Y > Y - 8) AND (Pointer.Y < Y + H + 8) THEN
       FadeCursor(Pointer)
     END
   END RemoveMarks;
@@ -175,10 +210,10 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
     InputMsg: IF M.id = track THEN DrawCursor(Mouse, Arrow, M.X, M.Y) END |
     ControlMsg: IF M.id = mark THEN DrawCursor(Pointer, Star, M.X, M.Y) END |
     Viewers.ViewerMsg:
-      IF (M.id = Viewers.restore) & (V.W > 0) & (V.H > 0) THEN
+      IF (M.id = Viewers.restore) AND (V.W > 0) AND (V.H > 0) THEN
         RemoveMarks(V.X, V.Y, V.W, V.H);
         Display.ReplConst(Display.black, V.X, V.Y, V.W, V.H, Display.replace)
-      ELSIF (M.id = Viewers.modify) & (M.Y < V.Y) THEN
+      ELSIF (M.id = Viewers.modify) AND (M.Y < V.Y) THEN
         RemoveMarks(V.X, M.Y, V.W, V.Y - M.Y);
         Display.ReplConst(Display.black, V.X, M.Y, V.W, V.Y - M.Y, Display.replace)
       END
@@ -273,7 +308,7 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
   END OpenLog;
 
   (*command interpretation*)
-  PROCEDURE SetPar*(F: Display.Frame; T: Texts.Text; pos: LONGINT);
+  PROCEDURE SetPar*(F: Display.Frame; T: Texts.Text; pos: INTEGER);
   BEGIN Par.vwr := Viewers.This(F.X, F.Y); Par.frame := F; Par.text := T; Par.pos := pos
   END SetPar;
 
@@ -282,7 +317,7 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
       i, j: INTEGER; ch: CHAR;
       Mname, Cname: ARRAY 32 OF CHAR;
   BEGIN i := 0; ch := name[0];
-    WHILE (ch # ".") & (ch # 0X) DO Mname[i] := ch; INC(i); ch := name[i] END ;
+    WHILE (ch # ".") AND (ch # 0X) DO Mname[i] := ch; INC(i); ch := name[i] END ;
     IF ch = "." THEN
       Mname[i] := 0X; INC(i);
       Modules.Load(Mname, mod); res := Modules.res;
@@ -297,7 +332,7 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
     END
   END Call;
 
-  PROCEDURE GetSelection* (VAR text: Texts.Text; VAR beg, end, time: LONGINT);
+  PROCEDURE GetSelection* (VAR text: Texts.Text; VAR beg, end, time: INTEGER);
     VAR M: SelectionMsg;
   BEGIN
     M.time := -1; Viewers.Broadcast(M); time := M.time;
@@ -322,9 +357,9 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
 
   PROCEDURE NewTask*(h: Handler; period: INTEGER): Task;
     VAR t: Task;
-  BEGIN NEW(t); t.state := off; t.next := t; t.handle := h; t.period := period; RETURN t
+  BEGIN NEW(t); t.state := off; t.next := NIL; t.handle := h; t.period := period; RETURN t
   END NewTask;
-  
+
   PROCEDURE Install* (T: Task);
   BEGIN
     IF T.state = off THEN
@@ -377,8 +412,8 @@ MODULE Oberon; (*JG 6.9.90 / 23.9.93 / 13.8.94 / NW 14.4.2013 / 22.12.2015*)
         UNTIL M.keys = {};
         DEC(ActCnt)
       ELSE
-        IF (X # prevX) OR (Y # prevY) OR ~Mouse.on THEN
-          M.id := track; M.X := X; 
+        IF (X # prevX) OR (Y # prevY) OR NOT Mouse.on THEN
+          M.id := track; M.X := X;
           IF Y >= Display.Height THEN Y := Display.Height END ;
           M.Y := Y; M.keys := keys; V := Viewers.This(X, Y); V.handle(V, M); prevX := X; prevY := Y
         END;

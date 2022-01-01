@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE EBNF;  (*NW 3.9.97 / 12.9.97 / 1.3.2014*)
   IMPORT Texts, Oberon;
 
@@ -25,7 +60,7 @@ MODULE EBNF;  (*NW 3.9.97 / 12.9.97 / 1.3.2014*)
 
   VAR ch: CHAR;
     sym: INTEGER;
-    lastpos: LONGINT;
+    lastpos: INTEGER;
     tsno, ntsno: INTEGER;
     id: Identifier;
     root, curs: Symbol;
@@ -33,7 +68,7 @@ MODULE EBNF;  (*NW 3.9.97 / 12.9.97 / 1.3.2014*)
     W: Texts.Writer;
 
   PROCEDURE error(n: INTEGER);
-    VAR pos: LONGINT;
+    VAR pos: INTEGER;
   BEGIN pos := Texts.Pos(R);
     IF pos > lastpos THEN
       Texts.WriteString(W, "  pos"); Texts.WriteInt(W, pos, 6);
@@ -47,7 +82,7 @@ MODULE EBNF;  (*NW 3.9.97 / 12.9.97 / 1.3.2014*)
     VAR s: Symbol;   (*find or enter symbol in list*)
   BEGIN s := root;
 
-    WHILE (s # NIL) & (s.id # ident) DO s := s.next END ;
+    WHILE (s # NIL) AND (s.id # ident) DO s := s.next END ;
     IF s = NIL THEN
       NEW(s); s.id := ident; s.tag := tag;
       IF tag = 0 THEN s.no := tsno; INC(tsno) ELSE s.no := ntsno; INC(ntsno) END ;
@@ -66,13 +101,13 @@ MODULE EBNF;  (*NW 3.9.97 / 12.9.97 / 1.3.2014*)
   PROCEDURE GetSym;
     VAR i: INTEGER;
   BEGIN
-    WHILE ~R.eot & (ch <= " ") DO Texts.Read(R, ch) END ;
-    IF (ch >= "a") & (ch <= "z") OR (ch >= "A") & (ch <= "Z") THEN
+    WHILE NOT R.eot AND (ch <= " ") DO Texts.Read(R, ch) END ;
+    IF (ch >= "a") AND (ch <= "z") OR (ch >= "A") AND (ch <= "Z") THEN
       sym := ident; i := 0;
       REPEAT
         IF i < IdLen-1 THEN id[i] := ch; INC(i) END ;
         Texts.Read(R, ch)
-      UNTIL ~((ch >= "a") & (ch <= "z") OR (ch >= "A") & (ch <= "Z"));
+      UNTIL NOT ((ch >= "a") AND (ch <= "z") OR (ch >= "A") AND (ch <= "Z"));
       id[i] := 0X
     ELSE
       IF ch = 22X THEN
@@ -141,7 +176,7 @@ MODULE EBNF;  (*NW 3.9.97 / 12.9.97 / 1.3.2014*)
     IF sym = period THEN GetSym ELSE error(8) END
   END production;
 
-  PROCEDURE syntax(T: Texts.Text; pos: LONGINT);
+  PROCEDURE syntax(T: Texts.Text; pos: INTEGER);
   BEGIN Texts.OpenReader(R, T, pos);  Texts.Read(R, ch);
     tsno := 0; ntsno := 0; lastpos := 0; GetSym;
     WHILE sym = ident DO production END ;
@@ -149,12 +184,12 @@ MODULE EBNF;  (*NW 3.9.97 / 12.9.97 / 1.3.2014*)
   END syntax;
 
   PROCEDURE Compile*;
-    VAR beg, end, time: LONGINT;
+    VAR beg, end, time: INTEGER;
       T: Texts.Text;
       S: Texts.Scanner;
   BEGIN root := NIL;
     Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
-    IF (S.class = Texts.Char) & (S.c = "@") THEN
+    IF (S.class = Texts.Char) AND (S.c = "@") THEN
       Oberon.GetSelection(T, beg, end, time);
       IF time >= 0 THEN syntax(T, beg) END
     END
@@ -212,8 +247,8 @@ MODULE EBNF;  (*NW 3.9.97 / 12.9.97 / 1.3.2014*)
     VAR x: Symbol;
   BEGIN Texts.Write(W, 9X); Texts.WriteString(W, id); Texts.WriteString(W, " :: ");
     x := root;
-    WHILE (s # {}) & (x # NIL) DO
-      IF (x.tag = 0) & (x.no IN s) THEN Texts.Write(W, " "); Texts.WriteString(W, x.id); EXCL(s, x.no) END ;
+    WHILE (s # {}) AND (x # NIL) DO
+      IF (x.tag = 0) AND (x.no IN s) THEN Texts.Write(W, " "); Texts.WriteString(W, x.id); EXCL(s, x.no) END ;
       x := x.next
     END ;
     Texts.WriteLn(W)
@@ -274,9 +309,9 @@ MODULE EBNF;  (*NW 3.9.97 / 12.9.97 / 1.3.2014*)
 
   PROCEDURE pair(x: Item);
   BEGIN
-    IF (x # NIL) & (x.tag >= 2) THEN
+    IF (x # NIL) AND (x.tag >= 2) THEN
       pair(x.u); pair(x.v);
-      IF (x.tag = 4) & (x.u.tag = 1) THEN
+      IF (x.tag = 4) AND (x.u.tag = 1) THEN
         IF first(x.v) * x.u(Symbol).crit # {} THEN
           Texts.WriteString(W, " clash "); WriteSet(x.u(Symbol).id, x.u(Symbol).crit);
           Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
@@ -368,8 +403,8 @@ arithExp  =  simArithExp | "IF" BoolExp "THEN" simArithExp "ELSE" arithExp.
 relOp  =  "<" | "<=" | "=" | ">=" | ">" | "#" .
 relation  =  arithExp relOp arithExp.
 BoolPrimary  =  "TRUE" | "FALSE" | "variable" | relation | "(" BoolExp ")".
-BoolSec  =  BoolPrimary | "~" BoolPrimary.
-BoolFactor  =  BoolSec | BoolFactor "&" BoolSec.
+BoolSec  =  BoolPrimary | "NOT" BoolPrimary.
+BoolFactor  =  BoolSec | BoolFactor "AND" BoolSec.
 BoolTerm  =  BoolFactor | BoolTerm "|" BoolFactor.
 implication  =  BoolTerm | implication "=>" BooleanTerm.
 simpleBoolean  =  implication | simpleBoolean "==" implication.
@@ -385,10 +420,10 @@ arithExp  =  simArithExp | "IF" BoolExp "THEN" simArithExp "ELSE" arithExp.
 relOp  =  "<" | "<=" | "=" | ">=" | ">" | "#" .
 relation  =  arithExp relOp arithExp.
 BoolPrimary  =  "TRUE" | "FALSE" | "Bvariable" | relation | "[" BoolExp "]".
-BoolSec  =  ["~"] BoolPrimary.
-BoolFactor  =  BoolSec {"&" BoolSec}.
+BoolSec  =  ["NOT"] BoolPrimary.
+BoolFactor  =  BoolSec {"AND" BoolSec}.
 BoolTerm  =  BoolFactor {"|" BoolFactor}.
 implication  =  BoolTerm {"=>" BooleanTerm}.
 simBoolExp  =  implication {"==" implication}.
 BoolExp  =  simBoolExp | "IFB" BoolExp "THEN" simBoolExp "ELSE" BoolExp.
-~ 
+~

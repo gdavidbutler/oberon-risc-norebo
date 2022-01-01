@@ -1,3 +1,38 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE GraphTool;  (*NW  8.8.2013*)
   IMPORT Files, Texts, Oberon;
 
@@ -20,7 +55,7 @@ MODULE GraphTool;  (*NW  8.8.2013*)
         Files.Set(R, F, 0); Files.Read(R, ch);
         IF ch = 0F8X THEN
           Files.ReadByte(R, class);
-          WHILE ~R.eof & (class < 255) DO
+          WHILE NOT R.eof AND (class < 255) DO
             Texts.WriteInt(W, class, 4);
             IF class = Context THEN
               Files.ReadByte(R, cat); Files.ReadByte(R, inx); Texts.WriteInt(W, cat, 4); Texts.WriteInt(W, inx, 4);
@@ -70,7 +105,7 @@ MODULE GraphTool;  (*NW  8.8.2013*)
         Files.Set(R, F, 0); Files.Read(R, ch);
         IF ch = 0FAX THEN
           Files.ReadByte(R, class);
-          WHILE ~R.eof & (class < 255) DO
+          WHILE NOT R.eof AND (class < 255) DO
             Texts.WriteInt(W, class, 4);
             IF class = Context THEN
               Files.ReadByte(R, cat); Files.ReadByte(R, inx); Texts.WriteInt(W, cat, 4); Texts.WriteInt(W, inx, 4);
@@ -121,7 +156,7 @@ MODULE GraphTool;  (*NW  8.8.2013*)
         Files.Set(R, F, 0); Files.Read(R, ch);
         IF ch = 0FBX THEN
           Files.ReadByte(R, class);
-          WHILE (class < 255) & ~R.eof  DO
+          WHILE (class < 255) AND NOT R.eof  DO
             WHILE class < 255  DO
               Texts.WriteInt(W, class, 4);
               IF class = Context THEN
@@ -161,7 +196,7 @@ MODULE GraphTool;  (*NW  8.8.2013*)
 
   PROCEDURE ConvertFontname(VAR x: ARRAY OF CHAR);
   BEGIN (* Syntax --> Oberon *)
-    IF (x[0] = "S") & (x[1] = "y") & (x[2] = "n") & (x[3] = "t") & (x[4] = "a") & (x[5] = "x") THEN
+    IF (x[0] = "S") AND (x[1] = "y") AND (x[2] = "n") AND (x[3] = "t") AND (x[4] = "a") AND (x[5] = "x") THEN
       x[0] := "O"; x[1] := "b"; x[2] := "e"; x[3] := "r"; x[4] := "o"; x[5] := "n"
     END
   END ConvertFontname;
@@ -184,7 +219,7 @@ MODULE GraphTool;  (*NW  8.8.2013*)
         Files.Set(R, F, 0); Files.Set(Q, G, 0); Files.Read(R, ch);
         IF ch = 0FDX THEN
           Files.Write(Q, 0FBX); Files.ReadByte(R, class);
-          WHILE (class < 255) & ~R.eof  DO
+          WHILE (class < 255) AND NOT R.eof  DO
             WHILE class < 255  DO
               Files.WriteByte(Q, class);
               IF class = Context THEN

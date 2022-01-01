@@ -1,10 +1,45 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE Tools;   (*NW 22.2.2014*)
-  IMPORT SYSTEM, Kernel, Files, Modules, Input, Texts, Viewers, MenuViewers, TextFrames, Oberon;
+  IMPORT SYSTEM, Kernel, Files, Texts, Viewers, MenuViewers, TextFrames, Oberon;
   VAR T: Texts.Text; V: MenuViewers.Viewer; W: Texts.Writer;
 
   PROCEDURE OpenViewer(T: Texts.Text; title: ARRAY OF CHAR);
     VAR X, Y: INTEGER;
-  BEGIN 
+  BEGIN
     Oberon.AllocateUserViewer(0, X, Y);
     V := MenuViewers.New(
         TextFrames.NewMenu(title, "System.Close  System.Copy  System.Grow  Edit.Search  Edit.Store"),
@@ -19,7 +54,7 @@ MODULE Tools;   (*NW 22.2.2014*)
   PROCEDURE Recall*;
     VAR M: Viewers.ViewerMsg;
   BEGIN
-    IF (V # NIL) & (V.state = 0) THEN
+    IF (V # NIL) AND (V.state = 0) THEN
       Viewers.Open(V, V.X, V.Y + V.H); M.id := Viewers.restore; V.handle(V, M)
     END
   END Recall;
@@ -65,7 +100,7 @@ MODULE Tools;   (*NW 22.2.2014*)
       Texts.WriteString(W, S.s); F := Files.Old(S.s);
       IF F # NIL THEN
         n := 0; Files.Set(R, F, 0); Files.ReadInt(R, x);
-        WHILE ~R.eof DO
+        WHILE NOT R.eof DO
           IF n MOD 20H = 0 THEN Texts.WriteLn(W); Texts.WriteHex(W, n); Texts.Write(W, 9X) END ;
           Texts.WriteHex(W, x); INC(n, 4); Files.ReadInt(R, x)
         END ;
@@ -77,7 +112,7 @@ MODULE Tools;   (*NW 22.2.2014*)
   END ShowFile;
 
   PROCEDURE Convert*;   (*convert selected text to txt-format*)
-    VAR beg, end, time: LONGINT
+    VAR beg, end, time: INTEGER
       ; ch: CHAR;
       T: Texts.Text; R: Texts.Reader;  (*input*)
       F: Files.File; Q: Files.Rider;   (*output*)
@@ -87,7 +122,7 @@ MODULE Tools;   (*NW 22.2.2014*)
       Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos); Texts.Scan(S);
       Texts.WriteString(W, "converting to "); Texts.WriteString(W, S.s);
       F := Files.New(S.s); Files.Set(Q, F, 0); Texts.OpenReader(R, T, beg); Texts.Read(R, ch);
-      WHILE ~R.eot DO
+      WHILE NOT R.eot DO
         IF ch = 0DX THEN Files.Write(Q, 0DX); Files.Write(Q, 0AX)
         ELSIF ch = 9X THEN  (*TAB*) Files.Write(Q, " "); Files.Write(Q, " ")
         ELSE Files.Write(Q, ch)

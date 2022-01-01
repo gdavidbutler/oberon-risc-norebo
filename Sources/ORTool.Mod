@@ -1,5 +1,40 @@
+(*
+ * Oberon - language, compiler and system
+ * Copyright (C) 2022 G. David Butler <gdb@dbSystems.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *)
+(*
+ * Project Oberon, Revised Edition 2013
+ * Copyright (C)2013 Niklaus Wirth (NW), Juerg Gutknecht (JG), Paul Reed (PR/PDR).
+ *
+ * Permission to use, copy, modify, and/or distribute this software and its
+ * accompanying documentation (the "Software") for any purpose with or
+ * without fee is hereby granted, provided that the above copyright notice
+ * and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+ * WITH REGARD TO THE SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS BE LIABLE FOR ANY CLAIM, SPECIAL, DIRECT, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES OR LIABILITY WHATSOEVER, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE DEALINGS IN OR USE OR PERFORMANCE OF THE SOFTWARE.
+ *)
+
 MODULE ORTool;  (*NW 18.2.2013*)
-  IMPORT SYSTEM, Files, Texts, Oberon, ORB;
+  IMPORT Files, Texts, Oberon, ORB;
   VAR W: Texts.Writer;
     Form: INTEGER;  (*result of ReadType*)
     mnemo0, mnemo1: ARRAY 16, 4 OF CHAR;  (*mnemonics*)
@@ -25,7 +60,7 @@ MODULE ORTool;  (*NW 18.2.2013*)
         Texts.WriteString(W, "  size = "); Texts.WriteInt(W, size, 1)
       ELSIF form = ORB.Record THEN
         ReadType(R);  (*base type*)
-        Files.ReadNum(R, off); Texts.WriteString(W, "  exno = "); Texts.WriteInt(W, off, 1); 
+        Files.ReadNum(R, off); Texts.WriteString(W, "  exno = "); Texts.WriteInt(W, off, 1);
         Files.ReadNum(R, off); Texts.WriteString(W, "  extlev = "); Texts.WriteInt(W, off, 1);
         Files.ReadNum(R, size); Texts.WriteString(W, "  size = "); Texts.WriteInt(W, size, 1);
         Texts.Write(W, " "); Texts.Write(W, "{"); Read(R, class);
@@ -94,10 +129,10 @@ MODULE ORTool;  (*NW 18.2.2013*)
       Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
     END
   END DecSym;
-  
+
 (* ---------------------------------------------------*)
 
-  PROCEDURE WriteReg(r: LONGINT);
+  PROCEDURE WriteReg(r: INTEGER);
   BEGIN Texts.Write(W, " ");
     IF r < 12 THEN Texts.WriteString(W, " R"); Texts.WriteInt(W, r MOD 10H, 1)
     ELSIF r = 12 THEN Texts.WriteString(W, "MT")
@@ -107,8 +142,8 @@ MODULE ORTool;  (*NW 18.2.2013*)
     END
   END WriteReg;
 
-  PROCEDURE opcode(w: LONGINT);
-    VAR k, op, u, a, b, c: LONGINT;
+  PROCEDURE opcode(w: INTEGER);
+    VAR k, op, u, a, b, c: INTEGER;
   BEGIN
       k := w DIV 40000000H MOD 4;
       a := w DIV 1000000H MOD 10H;
@@ -146,7 +181,7 @@ MODULE ORTool;  (*NW 18.2.2013*)
     VAR ch: CHAR;
   BEGIN Files.Read(R, ch); Texts.WriteString(W, "Sync "); Texts.Write(W, ch); Texts.WriteLn(W)
   END Sync;
-  
+
   PROCEDURE Write(VAR R: Files.Rider; x: INTEGER);
   BEGIN Files.WriteByte(R, x)  (* -128 <= x < 128 *)
   END Write;

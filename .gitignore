@@ -1,2 +1,3 @@
-/norebo
-/build*/
+/run
+/build?/
+/build-host/

@@ -1,4 +1,4 @@
-Draw.Open XX.Graph  Draw.Store 
+Draw.Open XX.Graph  Draw.Store
 Rectangles.Make  Curves.MakeCircle
 
 System.SetFont Oberon10.Scn.Fnt
