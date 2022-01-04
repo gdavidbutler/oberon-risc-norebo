@@ -8,15 +8,15 @@ fi
 make
 
 ROOT="$PWD"
-COMPILE="ORP.Compile Norebo.Mod Kernel.Mod FileDir.Mod Files.Mod Modules.Mod Fonts.Mod Texts.Mod RS232.Mod Oberon.Mod CoreLinker.Mod ORS.Mod ORB.Mod ORG.Mod ORP.Mod"
+COMPILE="ORP.Compile Norebo.Mod Kernel.Mod FileDir.Mod Files.Mod Modules.Mod Fonts.Mod Texts.Mod RS232.Mod Oberon.Mod CoreLinker.Mod ORS.Mod ORB.Mod ORG.Mod ORP.Mod VDisk.Mod VFileDir.Mod VFiles.Mod VDiskUtil.Mod"
 LINK="CoreLinker.LinkSerial Modules InnerCore"
 
 echo '=== Stage 1 ==='
 mkdir build1
 cd build1
-NOREBO_PATH=$ROOT/Norebo:$ROOT/Sources:$ROOT/Bootstrap ../run $COMPILE
+NOREBO_PATH=$ROOT/Norebo:$ROOT/Host:$ROOT/Sources:$ROOT/Bootstrap ../run $COMPILE
 for i in *.rsc;do mv $i `basename $i .rsc`.rsx;done
-NOREBO_PATH=$ROOT/Norebo:$ROOT/Sources:$ROOT/Bootstrap ../run $LINK
+NOREBO_PATH=$ROOT/Bootstrap ../run $LINK
 for i in *.rsx;do mv $i `basename $i .rsx`.rsc;done
 # Remove created symbol files so re-created in stage 2
 rm *.smb
@@ -30,9 +30,9 @@ echo
 echo '=== Stage 2 ==='
 mkdir build2
 cd build2
-NOREBO_PATH=$ROOT/Norebo:$ROOT/Sources:$ROOT/build1 ../run $COMPILE
+NOREBO_PATH=$ROOT/Norebo:$ROOT/Host:$ROOT/Sources:$ROOT/build1 ../run $COMPILE
 for i in *.rsc;do mv $i `basename $i .rsc`.rsx;done
-NOREBO_PATH=$ROOT/Norebo:$ROOT/Sources:$ROOT/build1 ../run $LINK
+NOREBO_PATH=$ROOT/build1 ../run $LINK
 for i in *.rsx;do mv $i `basename $i .rsx`.rsc;done
 # Hide symbol files
 for i in *.smb;do mv $i `basename $i .smb`.smx;done
@@ -42,9 +42,9 @@ echo
 echo '=== Stage 3 ==='
 mkdir build3
 cd build3
-NOREBO_PATH=$ROOT/Norebo:$ROOT/Sources:$ROOT/build2 ../run $COMPILE
+NOREBO_PATH=$ROOT/Norebo:$ROOT/Host:$ROOT/Sources:$ROOT/build2 ../run $COMPILE
 for i in *.rsc;do mv $i `basename $i .rsc`.rsx;done
-NOREBO_PATH=$ROOT/Norebo:$ROOT/Sources:$ROOT/build2 ../run $LINK
+NOREBO_PATH=$ROOT/build2 ../run $LINK
 for i in *.rsx;do mv $i `basename $i .rsx`.rsc;done
 cd ..
 

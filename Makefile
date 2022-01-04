@@ -5,4 +5,4 @@ run: Runtime/norebo.c Runtime/risc-cpu.c Runtime/risc-cpu.h
 
 clean:
 	rm -f run
-	rm -rf build1 build2 build3 build-host
+	rm -rf build1 build2 build3 build-risc
